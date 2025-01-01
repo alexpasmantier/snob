@@ -1,0 +1,25 @@
+[build-system]
+requires = ["maturin>=1.8,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "snob_lib"
+description = "A tool that only selects meaningful python tests to run."
+readme = "README.md"
+authors = [{ name = "Bertrand Chardon", email = "bertrand.chardon@gmail.com" },  {name = "Alexandre Pasmantier", email = "alex.pasmant@gmail.com"} ]
+license = { file = "LICENSE" }
+keywords = ["snob", "pytest", "testing", "rust", "rts", "maturin", "pyo3"]
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/alexpasmantier/snob"
+
+
+[tool.maturin]
+features = ["pyo3/extension-module"]

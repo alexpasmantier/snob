@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project.entry-points.pytest11]
+pytest-snob = "pytest_snob.plugin"
+
+[project]
+name = "pytest-snob"
+version = "0.1.0"
+description = "A pytest plugin that only selects meaningful python tests to run."
+readme = "README.md"
+authors = [{ name = "Bertrand Chardon", email = "bertrand.chardon@gmail.com" },  {name = "Alexandre Pasmantier", email = "alex.pasmant@gmail.com"} ]
+license = { file = "LICENSE" }
+classifiers = [
+    "Framework :: Pytest",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["snob", "pytest", "testing", "rust", "rts", "maturin", "pyo3"]
+dependencies = [
+    "snob_lib",
+    "pytest",
+]
+requires-python = ">=3.9"
+
+[project.urls]
+Homepage = "https://github.com/alexpasmantier/snob"
