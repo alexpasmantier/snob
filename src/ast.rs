@@ -13,10 +13,26 @@ pub struct FileImports {
     pub imports: Vec<Import>,
 }
 
+#[derive(Debug)]
+pub struct ResolvedFileImports {
+    pub file: PathBuf,
+    pub imports: Vec<String>,
+}
+
+impl ResolvedFileImports {
+    pub fn new(file: PathBuf, imports: Vec<String>) -> Self {
+        Self { file, imports }
+    }
+}
+
 const INIT_FILE: &str = "__init__.py";
 
 impl FileImports {
-    pub fn resolve_imports(&self, project_files: &HashSet<String>) -> Vec<String> {
+    pub fn resolve_imports(
+        &self,
+        project_files: &HashSet<String>,
+        first_level_dirs: &HashSet<PathBuf>,
+    ) -> ResolvedFileImports {
         let imports = self.imports.iter().map(|import| {
             if import.is_relative() {
                 // resolve relative imports
@@ -33,7 +49,11 @@ impl FileImports {
             }
         });
 
-        let resolved_imports = imports
+        let local_imports = imports.filter(|import| {
+            first_level_dirs.contains(&PathBuf::from(&import.components().next().unwrap()))
+        });
+
+        let resolved_imports = local_imports
             .map(
                 |import| match determine_import_type(&import, project_files) {
                     ImportType::Package(p) => p,
@@ -52,7 +72,7 @@ impl FileImports {
             )
             .collect();
 
-        resolved_imports
+        ResolvedFileImports::new(self.file.clone(), resolved_imports)
     }
 }
 

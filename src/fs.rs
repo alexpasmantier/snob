@@ -1,3 +1,5 @@
+use std::{collections::HashSet, path::PathBuf};
+
 use ignore::{DirEntry, WalkBuilder, types::TypesBuilder};
 
 fn create_walk_builder(current_dir: &std::path::PathBuf) -> WalkBuilder {
@@ -12,9 +14,18 @@ fn create_walk_builder(current_dir: &std::path::PathBuf) -> WalkBuilder {
     builder
 }
 
-pub fn crawl_workspace(current_dir: &std::path::PathBuf) -> Vec<std::path::PathBuf> {
+/// Crawl the workspace and return a list of files and directories
+/// # Arguments
+/// * `current_dir` - The directory to start the crawl from
+/// # Returns
+/// * A tuple containing a list of files and a list of directories
+pub fn crawl_workspace(
+    current_dir: &std::path::PathBuf,
+) -> (Vec<std::path::PathBuf>, HashSet<PathBuf>) {
     let builder = create_walk_builder(current_dir);
-    let (tx_handle, rx_handle) = std::sync::mpsc::channel();
+    let (tx_file_handle, rx_file_handle) = std::sync::mpsc::channel();
+    // for first level dirs
+    let (tx_dir_handle, rx_dir_handle) = std::sync::mpsc::channel();
 
     let parallel_walker = builder.build_parallel();
     parallel_walker.run(|| {
@@ -24,10 +35,13 @@ pub fn crawl_workspace(current_dir: &std::path::PathBuf) -> Vec<std::path::PathB
                     Ok(entry) => {
                         if let Some(file_type) = entry.file_type() {
                             if file_type.is_dir() {
+                                if entry.path().components().count() == 1 {
+                                    tx_dir_handle.send(entry.path().to_path_buf()).unwrap();
+                                }
                                 return ignore::WalkState::Continue;
                             }
                         }
-                        tx_handle.send(entry.path().to_path_buf()).unwrap();
+                        tx_file_handle.send(entry.path().to_path_buf()).unwrap();
                         ignore::WalkState::Continue
                     }
                     Err(err) => {
@@ -39,7 +53,10 @@ pub fn crawl_workspace(current_dir: &std::path::PathBuf) -> Vec<std::path::PathB
         )
     });
 
-    rx_handle.try_iter().collect()
+    (
+        rx_file_handle.try_iter().collect(),
+        rx_dir_handle.try_iter().collect(),
+    )
 }
 
 //import a.b.c as c

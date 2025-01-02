@@ -4,12 +4,14 @@ use std::path::PathBuf;
 use crate::cli::Cli;
 use crate::fs::crawl_workspace;
 
-use ast::extract_imports;
+use ast::{ResolvedFileImports, extract_imports};
 use clap::Parser;
+use graph::build_dependency_graph;
 
 mod ast;
 mod cli;
 mod fs;
+mod graph;
 
 fn main() {
     better_panic::install();
@@ -20,7 +22,7 @@ fn main() {
     let updated_files = &cli.updated_files;
 
     // crawl the target directory
-    let workspace_files = crawl_workspace(
+    let (workspace_files, first_level_dirs) = crawl_workspace(
         &cli.target_directory
             .unwrap_or(std::env::current_dir().unwrap()),
     );
@@ -33,18 +35,19 @@ fn main() {
     );
 
     // build dependency graph
-    workspace_files.iter().for_each(|f| {
-        if let Ok(file_imports) = extract_imports(f) {
+    let all_file_imports: Vec<ResolvedFileImports> = workspace_files
+        .iter()
+        .flat_map(|f| {
+            extract_imports(f)
+                .map(|file_imports| file_imports.resolve_imports(&project_files, &first_level_dirs))
             // File: python_code/package_1/module_1.py
             // depends on [python_code/package_1/module_2.py, python_code/package_2/__init__.py]
-            let resolved_imports = file_imports.resolve_imports(&project_files);
-            println!("{:?}", f);
-            println!("{:?}", resolved_imports);
-            println!();
-        }
-    });
+        })
+        .collect();
 
-    //let dependency_graph = build_dependency_graph(&workspace_files);
+    let dependency_graph = build_dependency_graph(&all_file_imports);
+
+    std::fs::write("dependency_graph.txt", format!("{:?}", dependency_graph)).unwrap();
 
     // resolve transitive closure of dependencies
 
@@ -53,10 +56,6 @@ fn main() {
     // find tests that depend on each subgraph of interest
 
     // output resulting test files
-}
-
-fn build_dependency_graph(workspace_files: &Vec<std::path::PathBuf>) {
-    todo!()
 }
 
 // PYTHONPATH
