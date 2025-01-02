@@ -27,6 +27,12 @@ fn main() {
             .unwrap_or(std::env::current_dir().unwrap()),
     );
 
+    println!(
+        "Crawled {:?} files and {:?} directories",
+        workspace_files.len(),
+        first_level_dirs.len()
+    );
+
     // keep a copy of the tree
     let project_files = HashSet::<String>::from_iter(
         workspace_files
@@ -46,6 +52,11 @@ fn main() {
         .collect();
 
     let dependency_graph = build_dependency_graph(&all_file_imports);
+    println!(
+        "Dependency graph size {:?}x{:?}",
+        dependency_graph.len(),
+        dependency_graph[0].len()
+    );
 
     std::fs::write("dependency_graph.txt", format!("{:?}", dependency_graph)).unwrap();
 

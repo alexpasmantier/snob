@@ -33,15 +33,16 @@ pub fn crawl_workspace(
             |entry: Result<DirEntry, ignore::Error>| -> ignore::WalkState {
                 match entry {
                     Ok(entry) => {
+                        let p = entry.path().strip_prefix(current_dir).unwrap();
                         if let Some(file_type) = entry.file_type() {
                             if file_type.is_dir() {
-                                if entry.path().components().count() == 1 {
-                                    tx_dir_handle.send(entry.path().to_path_buf()).unwrap();
+                                if p.components().count() == 1 {
+                                    tx_dir_handle.send(p.to_path_buf()).unwrap();
                                 }
                                 return ignore::WalkState::Continue;
                             }
                         }
-                        tx_file_handle.send(entry.path().to_path_buf()).unwrap();
+                        tx_file_handle.send(p.to_path_buf()).unwrap();
                         ignore::WalkState::Continue
                     }
                     Err(err) => {

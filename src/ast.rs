@@ -59,13 +59,17 @@ impl FileImports {
                     ImportType::Package(p) => p,
                     ImportType::Module(f) => f,
                     ImportType::Object => {
+                        println!("Resolving object import {:?}", import);
                         match determine_import_type(
                             import.parent().expect("Import path has no parent"),
                             project_files,
                         ) {
                             ImportType::Package(p) => p,
                             ImportType::Module(f) => f,
-                            ImportType::Object => unreachable!(),
+                            ImportType::Object => {
+                                println!("Failed to resolve import {:?}", import.parent().unwrap());
+                                unreachable!()
+                            }
                         }
                     }
                 },
@@ -86,16 +90,20 @@ const PY_EXTENSION: &str = "py";
 
 fn determine_import_type(import: &Path, project_files: &HashSet<String>) -> ImportType {
     let init_file = import.join(INIT_FILE).to_string_lossy().to_string();
+    println!("Checking if {:?} is a package", init_file);
     if project_files.contains(&init_file) {
         ImportType::Package(init_file)
     } else {
+        println!("not a package");
         let module_name = import
             .with_extension(PY_EXTENSION)
             .to_string_lossy()
             .to_string();
+        println!("Checking if {:?} is a module", module_name);
         if project_files.contains(&module_name) {
             return ImportType::Module(module_name);
         }
+        println!("not a module");
         ImportType::Object
     }
 }
