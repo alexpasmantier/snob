@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 use crate::cli::Cli;
@@ -24,17 +25,22 @@ fn main() {
             .unwrap_or(std::env::current_dir().unwrap()),
     );
 
+    // keep a copy of the tree
+    let project_files = HashSet::<String>::from_iter(
+        workspace_files
+            .iter()
+            .map(|p| p.to_string_lossy().to_string()),
+    );
+
     // build dependency graph
     workspace_files.iter().for_each(|f| {
         if let Ok(file_imports) = extract_imports(f) {
-            println!("\n");
-            println!("FILE: {:?}", file_imports.file);
-            for import in file_imports.imports {
-                println!(
-                    "\tIMPORT: path: {:?}  level: {:?}",
-                    import.segments, import.level
-                );
-            }
+            // File: python_code/package_1/module_1.py
+            // depends on [python_code/package_1/module_2.py, python_code/package_2/__init__.py]
+            let resolved_imports = file_imports.resolve_imports(&project_files);
+            println!("{:?}", f);
+            println!("{:?}", resolved_imports);
+            println!();
         }
     });
 
@@ -55,6 +61,15 @@ fn build_dependency_graph(workspace_files: &Vec<std::path::PathBuf>) {
 
 // PYTHONPATH
 // python's import paths: [cwd, PYTHONPATH, others]
-fn get_pythonpath() -> Vec<PathBuf> {
-    return vec![std::env::current_dir().unwrap()];
+fn get_importlib_paths() -> Vec<PathBuf> {
+    return vec![get_repo_root()];
+}
+
+fn get_repo_root() -> PathBuf {
+    let mut path = std::env::current_dir().unwrap();
+    // let's cross our fingers here
+    while !path.join(".git").exists() {
+        path = path.parent().unwrap().to_path_buf();
+    }
+    path
 }

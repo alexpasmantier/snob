@@ -1,12 +1,83 @@
 use anyhow::Result;
 use rustpython_ast::{Mod, ModModule, StmtImport, StmtImportFrom, Visitor};
 use rustpython_parser::{Mode, parse};
-use std::path::PathBuf;
+use std::{
+    collections::HashSet,
+    path::{MAIN_SEPARATOR_STR, Path, PathBuf},
+};
 
 #[derive(Debug)]
 pub struct FileImports {
+    // relative to current directory
     pub file: PathBuf,
     pub imports: Vec<Import>,
+}
+
+const INIT_FILE: &str = "__init__.py";
+
+impl FileImports {
+    pub fn resolve_imports(&self, project_files: &HashSet<String>) -> Vec<String> {
+        let imports = self.imports.iter().map(|import| {
+            if import.is_relative() {
+                // resolve relative imports
+                let p = self
+                    .file
+                    .ancestors()
+                    .nth(import.level)
+                    .expect("Relative import level too high");
+                // p = "python_code/"
+                p.join(import.to_file_path())
+            } else {
+                // resolve absolute imports
+                import.to_file_path()
+            }
+        });
+
+        let resolved_imports = imports
+            .map(
+                |import| match determine_import_type(&import, project_files) {
+                    ImportType::Package(p) => p,
+                    ImportType::Module(f) => f,
+                    ImportType::Object => {
+                        match determine_import_type(
+                            import.parent().expect("Import path has no parent"),
+                            project_files,
+                        ) {
+                            ImportType::Package(p) => p,
+                            ImportType::Module(f) => f,
+                            ImportType::Object => unreachable!(),
+                        }
+                    }
+                },
+            )
+            .collect();
+
+        resolved_imports
+    }
+}
+
+enum ImportType {
+    Package(String),
+    Module(String),
+    Object,
+}
+
+const PY_EXTENSION: &str = "py";
+
+fn determine_import_type(import: &Path, project_files: &HashSet<String>) -> ImportType {
+    let init_file = import.join(INIT_FILE).to_string_lossy().to_string();
+    if project_files.contains(&init_file) {
+        ImportType::Package(init_file)
+    } else {
+        let module_name = import
+            .with_extension(PY_EXTENSION)
+            .to_string_lossy()
+            .to_string();
+        if project_files.contains(&module_name) {
+            return ImportType::Module(module_name);
+        }
+        ImportType::Object
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -18,8 +89,12 @@ pub struct Import {
 const IMPORT_SEPARATOR: &str = ".";
 
 impl Import {
-    fn to_file_path(&self) -> String {
-        self.segments.join(std::path::MAIN_SEPARATOR_STR)
+    fn to_file_path(&self) -> PathBuf {
+        PathBuf::from(self.segments.join(MAIN_SEPARATOR_STR))
+    }
+
+    fn is_relative(&self) -> bool {
+        self.level > 0
     }
 }
 
