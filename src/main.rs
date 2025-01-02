@@ -1,10 +1,18 @@
-use crate::cli::Cli;
-use clap::Parser;
-use ignore::{DirEntry, WalkBuilder, types::TypesBuilder};
+use std::path::PathBuf;
 
+use crate::cli::Cli;
+use crate::fs::crawl_workspace;
+
+use ast::extract_imports;
+use clap::Parser;
+
+mod ast;
 mod cli;
+mod fs;
 
 fn main() {
+    better_panic::install();
+
     let cli = Cli::parse();
 
     // files that were modified by the patch
@@ -15,9 +23,21 @@ fn main() {
         &cli.target_directory
             .unwrap_or(std::env::current_dir().unwrap()),
     );
-    println!("{:?}", workspace_files);
 
     // build dependency graph
+    workspace_files.iter().for_each(|f| {
+        if let Ok(file_imports) = extract_imports(f) {
+            println!("\n");
+            println!("FILE: {:?}", file_imports.file);
+            for import in file_imports.imports {
+                println!(
+                    "\tIMPORT: path: {:?}  level: {:?}",
+                    import.segments, import.level
+                );
+            }
+        }
+    });
+
     //let dependency_graph = build_dependency_graph(&workspace_files);
 
     // resolve transitive closure of dependencies
@@ -29,48 +49,12 @@ fn main() {
     // output resulting test files
 }
 
-fn create_walk_builder(current_dir: &std::path::PathBuf) -> WalkBuilder {
-    let mut builder = WalkBuilder::new(current_dir);
-
-    // only python files
-    let mut types_builder = TypesBuilder::new();
-    types_builder.add_defaults();
-    types_builder.select("py");
-    builder.types(types_builder.build().unwrap());
-
-    builder
-}
-
-fn crawl_workspace(current_dir: &std::path::PathBuf) -> Vec<std::path::PathBuf> {
-    let builder = create_walk_builder(current_dir);
-    let (tx_handle, rx_handle) = std::sync::mpsc::channel();
-
-    let parallel_walker = builder.build_parallel();
-    parallel_walker.run(|| {
-        Box::new(
-            |entry: Result<DirEntry, ignore::Error>| -> ignore::WalkState {
-                match entry {
-                    Ok(entry) => {
-                        if let Some(file_type) = entry.file_type() {
-                            if file_type.is_dir() {
-                                return ignore::WalkState::Continue;
-                            }
-                        }
-                        tx_handle.send(entry.path().to_path_buf()).unwrap();
-                        ignore::WalkState::Continue
-                    }
-                    Err(err) => {
-                        eprintln!("Error: {err}");
-                        ignore::WalkState::Continue
-                    }
-                }
-            },
-        )
-    });
-
-    rx_handle.try_iter().collect()
-}
-
 fn build_dependency_graph(workspace_files: &Vec<std::path::PathBuf>) {
     todo!()
+}
+
+// PYTHONPATH
+// python's import paths: [cwd, PYTHONPATH, others]
+fn get_pythonpath() -> Vec<PathBuf> {
+    return vec![std::env::current_dir().unwrap()];
 }

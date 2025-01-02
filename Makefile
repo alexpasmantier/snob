@@ -1,4 +1,4 @@
 default: run
 
 run:
-	@cargo run -- --target-directory python `cat file_paths.txt`
+	@cargo run -- --target-directory python_code `cat file_paths.txt`
