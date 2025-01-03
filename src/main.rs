@@ -99,10 +99,12 @@ fn main() -> Result<()> {
 
 // PYTHONPATH
 // python's import paths: [cwd, PYTHONPATH, others]
+#[allow(dead_code)]
 fn get_importlib_paths() -> Vec<PathBuf> {
     vec![get_repo_root()]
 }
 
+#[allow(dead_code)]
 fn get_repo_root() -> PathBuf {
     let mut path = std::env::current_dir().unwrap();
     // let's cross our fingers here

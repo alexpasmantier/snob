@@ -8,21 +8,8 @@ use std::{
 
 #[derive(Debug)]
 pub struct FileImports {
-    // relative to current directory
     pub file: PathBuf,
     pub imports: Vec<Import>,
-}
-
-#[derive(Debug)]
-pub struct ResolvedFileImports {
-    pub file: PathBuf,
-    pub imports: Vec<String>,
-}
-
-impl ResolvedFileImports {
-    pub fn new(file: PathBuf, imports: Vec<String>) -> Self {
-        Self { file, imports }
-    }
 }
 
 const INIT_FILE: &str = "__init__.py";
@@ -32,7 +19,7 @@ impl FileImports {
         &self,
         project_files: &HashSet<String>,
         first_level_dirs: &HashSet<PathBuf>,
-    ) -> ResolvedFileImports {
+    ) -> Vec<String> {
         let imports = self.imports.iter().map(|import| {
             if import.is_relative() {
                 // resolve relative imports
@@ -76,7 +63,7 @@ impl FileImports {
             )
             .collect();
 
-        ResolvedFileImports::new(self.file.clone(), resolved_imports)
+        resolved_imports
     }
 }
 
@@ -153,7 +140,7 @@ pub fn extract_file_dependencies(
 
             let resolved_imports = file_imports.resolve_imports(project_files, first_level_dirs);
 
-            for import in resolved_imports.imports {
+            for import in resolved_imports {
                 graph
                     .entry(import)
                     .or_insert_with(Vec::new)
