@@ -1,5 +1,3 @@
 # snob 🍵
 
-running _all_ the tests all the time? DREARY...
-
-I'd rather run the relevant tests all the time
+`snob` is a tool that allows developers to select tests to execute for a given commit. The idea behind it is that most tests are executed for no reason most of the time.
