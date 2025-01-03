@@ -1,4 +1,5 @@
 use anyhow::Result;
+use log::{debug, warn};
 use rustpython_ast::{Mod, ModModule, StmtImport, StmtImportFrom, Visitor};
 use rustpython_parser::{Mode, parse};
 use std::{
@@ -46,7 +47,7 @@ impl FileImports {
                     ImportType::Package(p) => Some(p),
                     ImportType::Module(f) => Some(f),
                     ImportType::Object => {
-                        //println!("Resolving object import {:?}", import);
+                        debug!("Resolving object import {:?}", import);
                         match determine_import_type(
                             import.parent().expect("Import path has no parent"),
                             project_files,
@@ -54,7 +55,7 @@ impl FileImports {
                             ImportType::Package(p) => Some(p),
                             ImportType::Module(f) => Some(f),
                             ImportType::Object => {
-                                //println!("Failed to resolve import {:?}", import.parent().unwrap());
+                                warn!("Failed to resolve import {:?}", import.parent().unwrap());
                                 None
                             }
                         }
@@ -77,20 +78,20 @@ const PY_EXTENSION: &str = "py";
 
 fn determine_import_type(import: &Path, project_files: &HashSet<String>) -> ImportType {
     let init_file = import.join(INIT_FILE).to_string_lossy().to_string();
-    //println!("Checking if {:?} is a package", init_file);
+    debug!("Checking if {:?} is a package", init_file);
     if project_files.contains(&init_file) {
         ImportType::Package(init_file)
     } else {
-        //println!("not a package");
+        debug!("\tnot a package");
         let module_name = import
             .with_extension(PY_EXTENSION)
             .to_string_lossy()
             .to_string();
-        //println!("Checking if {:?} is a module", module_name);
+        debug!("Checking if {:?} is a module", module_name);
         if project_files.contains(&module_name) {
             return ImportType::Module(module_name);
         }
-        //println!("not a module");
+        debug!("\tnot a module");
         ImportType::Object
     }
 }
@@ -129,7 +130,6 @@ pub fn extract_file_dependencies(
             type_ignores: _t,
         })) => {
             let mut visitor = ImportVisitor { imports: vec![] };
-            // it seems rustpython's asts don't implement accept
             body.iter()
                 .for_each(|stmt| visitor.visit_stmt(stmt.clone()));
 
@@ -149,8 +149,8 @@ pub fn extract_file_dependencies(
 
             Ok(graph)
         }
-        Err(e) => anyhow::bail!("Error parsing file: {:?}", e),
-        _ => anyhow::bail!("Unexpected module type"),
+        Err(e) => anyhow::bail!("Error parsing file {:?}: {:?}", file, e),
+        _ => anyhow::bail!("Unexpected module type in file {:?}", file),
     }
 }
 
