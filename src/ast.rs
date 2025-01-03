@@ -3,7 +3,6 @@ use rustpython_ast::{Mod, ModModule, StmtImport, StmtImportFrom, Visitor};
 use rustpython_parser::{Mode, parse};
 use std::{
     collections::{HashMap, HashSet},
-    ops::Index,
     path::{MAIN_SEPARATOR_STR, Path, PathBuf},
 };
 
@@ -124,27 +123,6 @@ impl Import {
 
     fn is_relative(&self) -> bool {
         self.level > 0
-    }
-}
-
-#[derive(Debug)]
-pub struct DependencyGraph {
-    pub graph: HashMap<String, Vec<String>>,
-}
-
-impl DependencyGraph {
-    // toto.py is used by tata.py.
-    // {"toto.py": ["tata.py", "titi.py"]}
-    pub fn new(graph: HashMap<String, Vec<String>>) -> Self {
-        Self { graph }
-    }
-}
-
-impl Index<&str> for DependencyGraph {
-    type Output = Vec<String>;
-
-    fn index(&self, index: &str) -> &Self::Output {
-        &self.graph[index]
     }
 }
 

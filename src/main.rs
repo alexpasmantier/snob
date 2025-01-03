@@ -3,6 +3,7 @@ use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 
 use anyhow::Result;
+use rayon::prelude::*;
 use stdin::{is_readable_stdin, read_from_stdin};
 
 use crate::cli::Cli;
@@ -52,7 +53,7 @@ fn main() -> Result<()> {
 
     // build dependency graph
     let mut all_file_imports: Vec<HashMap<String, Vec<String>>> = workspace_files
-        .iter()
+        .par_iter()
         .map(|f| extract_file_dependencies(f, &project_files, &first_level_dirs))
         .collect::<Result<Vec<HashMap<String, Vec<String>>>>>()?;
 
@@ -99,7 +100,7 @@ fn main() -> Result<()> {
 // PYTHONPATH
 // python's import paths: [cwd, PYTHONPATH, others]
 fn get_importlib_paths() -> Vec<PathBuf> {
-    return vec![get_repo_root()];
+    vec![get_repo_root()]
 }
 
 fn get_repo_root() -> PathBuf {
