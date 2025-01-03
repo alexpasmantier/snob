@@ -1,72 +1,99 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+use std::io::{BufWriter, Write};
 use std::path::PathBuf;
+
+use anyhow::Result;
+use stdin::{is_readable_stdin, read_from_stdin};
 
 use crate::cli::Cli;
 use crate::fs::crawl_workspace;
 
-use ast::{ResolvedFileImports, extract_imports};
+use ast::extract_file_dependencies;
 use clap::Parser;
-use graph::build_dependency_graph;
+use graph::discover_impacted_nodes;
+use utils::merge_hashmaps;
 
 mod ast;
 mod cli;
 mod fs;
 mod graph;
+mod stdin;
+mod utils;
 
-fn main() {
+fn main() -> Result<()> {
     better_panic::install();
 
     let cli = Cli::parse();
 
     // files that were modified by the patch
-    let updated_files = &cli.updated_files;
+    // TODO: check if files exist
+    let updated_files = if is_readable_stdin() {
+        read_from_stdin()
+    } else {
+        cli.updated_files
+    };
+
+    std::env::set_current_dir(&cli.target_directory)?;
 
     // crawl the target directory
-    let (workspace_files, first_level_dirs) = crawl_workspace(
-        &cli.target_directory
-            .unwrap_or(std::env::current_dir().unwrap()),
-    );
+    let (workspace_files, first_level_dirs) = crawl_workspace();
 
-    println!(
-        "Crawled {:?} files and {:?} directories",
-        workspace_files.len(),
-        first_level_dirs.len()
-    );
+    //println!(
+    //    "Crawled {:?} files and {:?} directories",
+    //    workspace_files.len(),
+    //    first_level_dirs.len()
+    //);
 
     // keep a copy of the tree
-    let project_files = HashSet::<String>::from_iter(
-        workspace_files
-            .iter()
-            .map(|p| p.to_string_lossy().to_string()),
-    );
+    let project_files = workspace_files
+        .iter()
+        .map(|p| p.to_string_lossy().to_string())
+        .collect::<HashSet<String>>();
 
     // build dependency graph
-    let all_file_imports: Vec<ResolvedFileImports> = workspace_files
+    let mut all_file_imports: Vec<HashMap<String, Vec<String>>> = workspace_files
         .iter()
-        .flat_map(|f| {
-            extract_imports(f)
-                .map(|file_imports| file_imports.resolve_imports(&project_files, &first_level_dirs))
-            // File: python_code/package_1/module_1.py
-            // depends on [python_code/package_1/module_2.py, python_code/package_2/__init__.py]
+        .map(|f| extract_file_dependencies(f, &project_files, &first_level_dirs))
+        .collect::<Result<Vec<HashMap<String, Vec<String>>>>>()?;
+
+    // not deduplicated
+    let dependency_graph = merge_hashmaps(&mut all_file_imports)
+        .iter()
+        .map(|(k, v)| {
+            (
+                k.to_string(),
+                v.iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<HashSet<_>>(),
+            )
         })
-        .collect();
+        .collect::<HashMap<String, HashSet<String>>>();
 
-    let dependency_graph = build_dependency_graph(&all_file_imports);
-    println!(
-        "Dependency graph size {:?}x{:?}",
-        dependency_graph.len(),
-        dependency_graph[0].len()
-    );
+    let impacted_nodes: HashSet<String> =
+        discover_impacted_nodes(&dependency_graph, &updated_files);
 
-    std::fs::write("dependency_graph.txt", format!("{:?}", dependency_graph)).unwrap();
-
-    // resolve transitive closure of dependencies
-
-    // only keep sugraphs of interest (those that include `updated_files`)
-
-    // find tests that depend on each subgraph of interest
+    // filter impacted nodes to get the tests
+    // test_*.py   or   *_test.py
+    let impacted_tests = impacted_nodes.into_iter().filter(|n| {
+        PathBuf::from(n)
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .starts_with("test_")
+            || n.ends_with("_test.py")
+    });
 
     // output resulting test files
+    let stdout = std::io::stdout().lock();
+    let mut writer = BufWriter::new(stdout);
+
+    for test in impacted_tests {
+        writeln!(writer, "{test}").unwrap();
+    }
+
+    writer.flush().unwrap();
+
+    Ok(())
 }
 
 // PYTHONPATH

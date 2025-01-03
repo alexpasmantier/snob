@@ -1,5 +1,30 @@
+use std::collections::{HashMap, HashSet};
+
 use crate::ast::ResolvedFileImports;
 
+pub fn discover_impacted_nodes(
+    dependency_graph: &HashMap<String, HashSet<String>>,
+    updated_files: &[String],
+) -> HashSet<String> {
+    let mut impacted_nodes = HashSet::new();
+    let mut stack = updated_files.to_owned();
+    while let Some(file) = stack.pop() {
+        if impacted_nodes.contains(&file) {
+            continue;
+        }
+        impacted_nodes.insert(file.clone());
+        stack.extend(
+            dependency_graph
+                .get(&file)
+                .unwrap_or(&HashSet::new())
+                .iter()
+                .cloned(),
+        );
+    }
+    impacted_nodes
+}
+
+// NOTE: everything below might go to the trash
 pub fn build_dependency_graph(file_imports: &[ResolvedFileImports]) -> Vec<Vec<bool>> {
     let mut matrix = vec![vec![false; file_imports.len()]; file_imports.len()];
     for (x, fx) in file_imports.iter().enumerate() {

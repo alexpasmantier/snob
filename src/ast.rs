@@ -2,7 +2,8 @@ use anyhow::Result;
 use rustpython_ast::{Mod, ModModule, StmtImport, StmtImportFrom, Visitor};
 use rustpython_parser::{Mode, parse};
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
+    ops::Index,
     path::{MAIN_SEPARATOR_STR, Path, PathBuf},
 };
 
@@ -54,21 +55,21 @@ impl FileImports {
         });
 
         let resolved_imports = local_imports
-            .map(
+            .filter_map(
                 |import| match determine_import_type(&import, project_files) {
-                    ImportType::Package(p) => p,
-                    ImportType::Module(f) => f,
+                    ImportType::Package(p) => Some(p),
+                    ImportType::Module(f) => Some(f),
                     ImportType::Object => {
-                        println!("Resolving object import {:?}", import);
+                        //println!("Resolving object import {:?}", import);
                         match determine_import_type(
                             import.parent().expect("Import path has no parent"),
                             project_files,
                         ) {
-                            ImportType::Package(p) => p,
-                            ImportType::Module(f) => f,
+                            ImportType::Package(p) => Some(p),
+                            ImportType::Module(f) => Some(f),
                             ImportType::Object => {
-                                println!("Failed to resolve import {:?}", import.parent().unwrap());
-                                unreachable!()
+                                //println!("Failed to resolve import {:?}", import.parent().unwrap());
+                                None
                             }
                         }
                     }
@@ -90,20 +91,20 @@ const PY_EXTENSION: &str = "py";
 
 fn determine_import_type(import: &Path, project_files: &HashSet<String>) -> ImportType {
     let init_file = import.join(INIT_FILE).to_string_lossy().to_string();
-    println!("Checking if {:?} is a package", init_file);
+    //println!("Checking if {:?} is a package", init_file);
     if project_files.contains(&init_file) {
         ImportType::Package(init_file)
     } else {
-        println!("not a package");
+        //println!("not a package");
         let module_name = import
             .with_extension(PY_EXTENSION)
             .to_string_lossy()
             .to_string();
-        println!("Checking if {:?} is a module", module_name);
+        //println!("Checking if {:?} is a module", module_name);
         if project_files.contains(&module_name) {
             return ImportType::Module(module_name);
         }
-        println!("not a module");
+        //println!("not a module");
         ImportType::Object
     }
 }
@@ -126,8 +127,35 @@ impl Import {
     }
 }
 
-pub fn extract_imports(file: &PathBuf) -> Result<FileImports> {
+#[derive(Debug)]
+pub struct DependencyGraph {
+    pub graph: HashMap<String, Vec<String>>,
+}
+
+impl DependencyGraph {
+    // toto.py is used by tata.py.
+    // {"toto.py": ["tata.py", "titi.py"]}
+    pub fn new(graph: HashMap<String, Vec<String>>) -> Self {
+        Self { graph }
+    }
+}
+
+impl Index<&str> for DependencyGraph {
+    type Output = Vec<String>;
+
+    fn index(&self, index: &str) -> &Self::Output {
+        &self.graph[index]
+    }
+}
+
+pub fn extract_file_dependencies(
+    file: &PathBuf,
+    project_files: &HashSet<String>,
+    first_level_dirs: &HashSet<PathBuf>,
+) -> Result<HashMap<String, Vec<String>>> {
     let file_contents = std::fs::read_to_string(file)?;
+
+    let mut graph = HashMap::new();
 
     match parse(&file_contents, Mode::Module, "<embedded>") {
         Ok(Mod::Module(ModModule {
@@ -139,10 +167,22 @@ pub fn extract_imports(file: &PathBuf) -> Result<FileImports> {
             // it seems rustpython's asts don't implement accept
             body.iter()
                 .for_each(|stmt| visitor.visit_stmt(stmt.clone()));
-            Ok(FileImports {
+
+            let file_imports = FileImports {
                 file: file.clone(),
                 imports: visitor.imports,
-            })
+            };
+
+            let resolved_imports = file_imports.resolve_imports(project_files, first_level_dirs);
+
+            for import in resolved_imports.imports {
+                graph
+                    .entry(import)
+                    .or_insert_with(Vec::new)
+                    .push(file.to_string_lossy().to_string());
+            }
+
+            Ok(graph)
         }
         Err(e) => anyhow::bail!("Error parsing file: {:?}", e),
         _ => anyhow::bail!("Unexpected module type"),

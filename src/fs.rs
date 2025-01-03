@@ -19,10 +19,9 @@ fn create_walk_builder(current_dir: &std::path::PathBuf) -> WalkBuilder {
 /// * `current_dir` - The directory to start the crawl from
 /// # Returns
 /// * A tuple containing a list of files and a list of directories
-pub fn crawl_workspace(
-    current_dir: &std::path::PathBuf,
-) -> (Vec<std::path::PathBuf>, HashSet<PathBuf>) {
-    let builder = create_walk_builder(current_dir);
+pub fn crawl_workspace() -> (Vec<std::path::PathBuf>, HashSet<PathBuf>) {
+    let current_dir = std::env::current_dir().unwrap();
+    let builder = create_walk_builder(&current_dir);
     let (tx_file_handle, rx_file_handle) = std::sync::mpsc::channel();
     // for first level dirs
     let (tx_dir_handle, rx_dir_handle) = std::sync::mpsc::channel();
@@ -33,7 +32,7 @@ pub fn crawl_workspace(
             |entry: Result<DirEntry, ignore::Error>| -> ignore::WalkState {
                 match entry {
                     Ok(entry) => {
-                        let p = entry.path().strip_prefix(current_dir).unwrap();
+                        let p = entry.path().strip_prefix(current_dir.clone()).unwrap();
                         if let Some(file_type) = entry.file_type() {
                             if file_type.is_dir() {
                                 if p.components().count() == 1 {
