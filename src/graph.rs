@@ -10,14 +10,12 @@ pub fn discover_impacted_nodes(
         if impacted_nodes.contains(&file) {
             continue;
         }
+
         impacted_nodes.insert(file.clone());
-        stack.extend(
-            dependency_graph
-                .get(&file)
-                .unwrap_or(&HashSet::new())
-                .iter()
-                .cloned(),
-        );
+        if let Some(consumers) = dependency_graph.get(&file) {
+            log::debug!("{:?} has the following consumers: {:?}", file, consumers);
+            stack.extend(consumers.iter().cloned());
+        }
     }
     impacted_nodes
 }
