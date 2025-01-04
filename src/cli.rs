@@ -25,4 +25,8 @@ pub struct Cli {
     /// Quiet mode
     #[arg(short, long, default_value = "false")]
     pub quiet: bool,
+
+    /// Produce DOT graph at provided path
+    #[arg(short, long, value_name = "FILE")]
+    pub dot_graph: Option<PathBuf>,
 }

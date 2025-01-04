@@ -12,7 +12,7 @@ use crate::fs::crawl_workspace;
 
 use ast::extract_file_dependencies;
 use clap::Parser;
-use graph::discover_impacted_nodes;
+use graph::{discover_impacted_nodes, discover_impacted_nodes_with_graphviz};
 use utils::merge_hashmaps;
 
 mod ast;
@@ -86,8 +86,11 @@ fn main() -> Result<()> {
         })
         .collect::<HashMap<String, HashSet<String>>>();
 
-    let impacted_nodes: HashSet<String> =
-        discover_impacted_nodes(&dependency_graph, &updated_files);
+    let impacted_nodes: HashSet<String> = if let Some(dot_graph) = &cli.dot_graph {
+        discover_impacted_nodes_with_graphviz(&dependency_graph, &updated_files, dot_graph)
+    } else {
+        discover_impacted_nodes(&dependency_graph, &updated_files)
+    };
 
     debug!(
         "Impacted nodes: {:?}",
