@@ -1,4 +1,3 @@
-use log::debug;
 use std::collections::HashMap;
 
 pub fn merge_hashmaps<K, V, A>(hashmaps: &mut [HashMap<K, V>]) -> HashMap<K, V>

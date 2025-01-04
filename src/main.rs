@@ -1,7 +1,6 @@
-use log::{debug, error, info};
 use std::collections::{HashMap, HashSet};
 use std::io::{BufWriter, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use rayon::prelude::*;
@@ -10,6 +9,7 @@ use crate::ast::{extract_file_dependencies, INIT_FILE};
 use crate::cli::Cli;
 use crate::fs::{check_files_exist, crawl_workspace};
 use crate::graph::{discover_impacted_nodes, discover_impacted_nodes_with_graphviz};
+use crate::logging::init_logging;
 use crate::stdin::{is_readable_stdin, read_from_stdin};
 use crate::utils::merge_hashmaps;
 
@@ -19,6 +19,7 @@ mod ast;
 mod cli;
 mod fs;
 mod graph;
+mod logging;
 mod stdin;
 mod utils;
 
@@ -27,28 +28,36 @@ fn main() -> Result<()> {
 
     let cli = Cli::parse();
 
-    stderrlog::new()
-        .verbosity(cli.verbosity_level)
-        .quiet(cli.quiet)
-        .init()
-        .unwrap();
+    init_logging(&cli);
+
+    let current_dir = std::env::current_dir()?;
 
     // files that were modified by the patch
     let updated_files = if is_readable_stdin() {
         read_from_stdin()
     } else {
         cli.updated_files
-    };
+    }
+    .iter()
+    .map(|f| {
+        let p = PathBuf::from(f);
+        if p.is_relative() {
+            current_dir.join(p).to_string_lossy().to_string()
+        } else {
+            p.to_string_lossy().to_string()
+        }
+    })
+    .collect::<Vec<_>>();
+    snob_debug!("Updated files: {:?}", updated_files);
 
     check_files_exist(&updated_files)?;
 
     std::env::set_current_dir(&cli.target_directory)?;
-    let current_dir = std::env::current_dir()?;
-    debug!("Current directory: {:?}", current_dir);
+    snob_debug!("Current directory: {:?}", current_dir);
     let git_root = get_repo_root(&current_dir);
-    debug!("Git root: {:?}", git_root);
+    snob_debug!("Git root: {:?}", git_root);
     let lookup_paths = get_python_local_lookup_paths(&current_dir, &git_root);
-    debug!("Python lookup paths: {:?}", lookup_paths);
+    snob_debug!("Python lookup paths: {:?}", lookup_paths);
 
     let instant = std::time::Instant::now();
 
@@ -64,14 +73,17 @@ fn main() -> Result<()> {
             p.read_dir()
                 .unwrap()
                 .map(|entry| entry.unwrap().path())
-                .filter(|p| p.is_file() || (p.is_dir() && p.join(INIT_FILE).exists()))
+                .filter(|p| {
+                    (p.is_file() && p.extension().is_some_and(|ext| ext == "py"))
+                        || (p.is_dir() && p.join(INIT_FILE).exists())
+                })
                 .collect::<Vec<_>>()
         })
         .collect();
 
-    debug!("First level components: {:?}", first_level_components);
+    snob_debug!("First level components: {:?}", first_level_components);
 
-    debug!(
+    snob_debug!(
         "Crawled {:?} files and {:?} directories",
         workspace_files.len(),
         first_level_components.len()
@@ -83,7 +95,7 @@ fn main() -> Result<()> {
         .map(|p| p.to_string_lossy().to_string())
         .collect::<HashSet<String>>();
 
-    //debug!("Project files: {:?}", project_files);
+    //snob_debug!("Project files: {:?}", project_files);
 
     // build dependency graph
     let mut all_file_imports: Vec<HashMap<String, Vec<String>>> = workspace_files
@@ -93,13 +105,11 @@ fn main() -> Result<()> {
             {
                 Some(graph)
             } else {
-                error!("Failed to parse file {:?}", f);
+                snob_error!("Failed to parse file {:?}", f);
                 None
             }
         })
         .collect::<Vec<HashMap<String, Vec<String>>>>();
-
-    debug!("All file imports: {:?}", all_file_imports);
 
     // not deduplicated
     let dependency_graph = merge_hashmaps(&mut all_file_imports)
@@ -114,40 +124,39 @@ fn main() -> Result<()> {
         })
         .collect::<HashMap<String, HashSet<String>>>();
 
+    snob_debug!("Dependency graph:");
+    for (k, v) in &dependency_graph {
+        snob_debug!("\t{k} is used by:");
+        v.iter().for_each(|v| snob_debug!("\t\t{v}"));
+    }
+
     let impacted_nodes: HashSet<String> = if let Some(dot_graph) = &cli.dot_graph {
         discover_impacted_nodes_with_graphviz(&dependency_graph, &updated_files, dot_graph)
     } else {
         discover_impacted_nodes(&dependency_graph, &updated_files)
     };
 
-    debug!(
-        "Impacted nodes: {:?}",
-        impacted_nodes.iter().filter(|n| {
-            !PathBuf::from(n)
-                .file_name()
-                .unwrap()
-                .to_string_lossy()
-                .starts_with("test_")
-                || n.ends_with("_test.py")
-        })
-    );
-
     // filter impacted nodes to get the tests
     // test_*.py   or   *_test.py
-    let impacted_tests = impacted_nodes.into_iter().filter(|n| {
-        PathBuf::from(n)
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .starts_with("test_")
-            || n.ends_with("_test.py")
-    });
-    debug!("Impacted tests: {:?}", impacted_tests);
+    let impacted_tests = impacted_nodes
+        .into_iter()
+        .filter(|f| is_test_file(f))
+        .collect::<HashSet<String>>();
+    snob_debug!("Impacted tests: {:?}", impacted_tests);
 
-    info!(
+    snob_info!(
         "Analyzed {:?} files in {:?}",
         workspace_files.len(),
         instant.elapsed()
+    );
+    snob_info!(
+        "Found {}/{} impacted tests",
+        impacted_tests.len(),
+        workspace_files
+            .iter()
+            .filter(|f| is_test_file(f))
+            .collect::<Vec<_>>()
+            .len()
     );
 
     // output resulting test files
@@ -164,6 +173,18 @@ fn main() -> Result<()> {
 }
 
 const PYTHONPATH_ENV: &str = "PYTHONPATH";
+
+fn is_test_file<P>(file: P) -> bool
+where
+    P: AsRef<Path>,
+{
+    let file = file.as_ref();
+    file.file_name()
+        .unwrap()
+        .to_string_lossy()
+        .starts_with("test_")
+        || file.to_string_lossy().ends_with("_test.py")
+}
 
 #[derive(Debug, PartialEq)]
 pub struct LookupPaths {

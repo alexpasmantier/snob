@@ -24,9 +24,7 @@ rustpython-parser = "0.3.1"
 ignore = "0.4.23"
 anyhow = "1.0.95"
 rayon = "1.10.0"
-stderrlog = "0.6.0"
 log = "0.4.22"
-
-[profile.release]
+stderrlog = "0.6.0"
 # lto = "fat"
 # codegen-units = 1

@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use ignore::{types::TypesBuilder, DirEntry, WalkBuilder};
 
@@ -47,13 +47,6 @@ pub fn crawl_workspace() -> Vec<std::path::PathBuf> {
     });
 
     rx_file_handle.try_iter().collect()
-}
-
-fn is_direct_descendant(parent: &Path, child: &Path) -> bool {
-    match child.parent() {
-        Some(p) => p == parent,
-        None => false,
-    }
 }
 
 pub fn check_files_exist<P>(files: &[P]) -> Result<(), std::io::Error>
