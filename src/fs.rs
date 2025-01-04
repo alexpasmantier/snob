@@ -1,6 +1,6 @@
-use std::{collections::HashSet, path::PathBuf};
+use std::path::{Path, PathBuf};
 
-use ignore::{DirEntry, WalkBuilder, types::TypesBuilder};
+use ignore::{types::TypesBuilder, DirEntry, WalkBuilder};
 
 fn create_walk_builder(current_dir: &std::path::PathBuf) -> WalkBuilder {
     let mut builder = WalkBuilder::new(current_dir);
@@ -19,12 +19,10 @@ fn create_walk_builder(current_dir: &std::path::PathBuf) -> WalkBuilder {
 /// * `current_dir` - The directory to start the crawl from
 /// # Returns
 /// * A tuple containing a list of files and a list of directories
-pub fn crawl_workspace() -> (Vec<std::path::PathBuf>, HashSet<PathBuf>) {
+pub fn crawl_workspace() -> Vec<std::path::PathBuf> {
     let current_dir = std::env::current_dir().unwrap();
     let builder = create_walk_builder(&current_dir);
     let (tx_file_handle, rx_file_handle) = std::sync::mpsc::channel();
-    // for first level dirs
-    let (tx_dir_handle, rx_dir_handle) = std::sync::mpsc::channel();
 
     let parallel_walker = builder.build_parallel();
     parallel_walker.run(|| {
@@ -32,16 +30,11 @@ pub fn crawl_workspace() -> (Vec<std::path::PathBuf>, HashSet<PathBuf>) {
             |entry: Result<DirEntry, ignore::Error>| -> ignore::WalkState {
                 match entry {
                     Ok(entry) => {
-                        let p = entry.path().strip_prefix(current_dir.clone()).unwrap();
                         if let Some(file_type) = entry.file_type() {
-                            if file_type.is_dir() {
-                                if p.components().count() == 1 {
-                                    tx_dir_handle.send(p.to_path_buf()).unwrap();
-                                }
-                                return ignore::WalkState::Continue;
+                            if file_type.is_file() {
+                                tx_file_handle.send(entry.path().to_path_buf()).unwrap();
                             }
                         }
-                        tx_file_handle.send(p.to_path_buf()).unwrap();
                         ignore::WalkState::Continue
                     }
                     Err(err) => {
@@ -53,19 +46,27 @@ pub fn crawl_workspace() -> (Vec<std::path::PathBuf>, HashSet<PathBuf>) {
         )
     });
 
-    (
-        rx_file_handle.try_iter().collect(),
-        rx_dir_handle.try_iter().collect(),
-    )
+    rx_file_handle.try_iter().collect()
 }
 
-//import a.b.c as c
-//
-//from a.b import c
-//
-//a.b.c -> a/b/c/__init__.py existe pas
-//
-//a/
-//  b.py
-//  b/
-//    __init__.py
+fn is_direct_descendant(parent: &Path, child: &Path) -> bool {
+    match child.parent() {
+        Some(p) => p == parent,
+        None => false,
+    }
+}
+
+pub fn check_files_exist<P>(files: &[P]) -> Result<(), std::io::Error>
+where
+    P: AsRef<Path>,
+{
+    for file in files {
+        if !file.as_ref().exists() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("File {:?} does not exist", file.as_ref()),
+            ));
+        }
+    }
+    Ok(())
+}

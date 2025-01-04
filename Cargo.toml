@@ -28,5 +28,5 @@ stderrlog = "0.6.0"
 log = "0.4.22"
 
 [profile.release]
-lto = "fat"
-codegen-units = 1
+# lto = "fat"
+# codegen-units = 1
