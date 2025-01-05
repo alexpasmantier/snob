@@ -1,0 +1,12 @@
+[files]
+# the files listed here won't be considered by snob for import statements (glob format)
+ignores = ["files_to_ignore/**/*.py"]
+# the files listed here will trigger all tests on change
+run-all-tests-on-change = []
+
+[tests]
+# the tests listed here will never run (glob format)
+ignores = ["some_expensive_test_that_runs_elsewhere.py"]
+# the tests listed here will always run (has higher priority than ignores)
+always-run = ["tests/mandatory_tests/**/*.py"]
+

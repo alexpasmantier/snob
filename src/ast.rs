@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf, MAIN_SEPARATOR_STR},
 };
 
-use crate::{snob_debug, snob_warn};
+use crate::snob_debug;
 
 #[derive(Debug)]
 pub struct FileImports {
@@ -57,8 +57,8 @@ impl FileImports {
                             ImportType::Package(p) => Some(p),
                             ImportType::Module(f) => Some(f),
                             ImportType::Object => {
-                                snob_warn!(
-                                    "Failed to resolve import {:?} in file {:?}",
+                                snob_debug!(
+                                    "Unable to resolve import using crawled files {:?} in file {:?}",
                                     import.file_name().unwrap(),
                                     self.file
                                 );

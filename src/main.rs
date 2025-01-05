@@ -3,10 +3,12 @@ use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
+use globset::{Glob, GlobSet, GlobSetBuilder};
 use rayon::prelude::*;
 
 use crate::ast::{extract_file_dependencies, INIT_FILE};
 use crate::cli::Cli;
+use crate::config::Config;
 use crate::fs::{check_files_exist, crawl_workspace};
 use crate::graph::{discover_impacted_nodes, discover_impacted_nodes_with_graphviz};
 use crate::logging::init_logging;
@@ -17,6 +19,7 @@ use clap::Parser;
 
 mod ast;
 mod cli;
+mod config;
 mod fs;
 mod graph;
 mod logging;
@@ -31,6 +34,11 @@ fn main() -> Result<()> {
     init_logging(&cli);
 
     let current_dir = std::env::current_dir()?;
+    let git_root = get_repo_root(&current_dir);
+    snob_debug!("Git root: {:?}", git_root);
+
+    let config = Config::new(&git_root);
+    snob_debug!("Config: {:?}", config);
 
     // files that were modified by the patch
     let updated_files = if is_readable_stdin() {
@@ -52,17 +60,28 @@ fn main() -> Result<()> {
 
     check_files_exist(&updated_files)?;
 
+    let run_all_tests_on_change = build_glob_set(&config.files.run_all_tests_on_change)?;
+
+    if updated_files.iter().any(|f| {
+        !run_all_tests_on_change
+            .matches(PathBuf::from(f).strip_prefix(&git_root).unwrap())
+            .is_empty()
+    }) {
+        // exit early and run all tests
+        snob_info!("Running all tests");
+        println!(".");
+        return Ok(());
+    }
+
     std::env::set_current_dir(&cli.target_directory)?;
     snob_debug!("Current directory: {:?}", current_dir);
-    let git_root = get_repo_root(&current_dir);
-    snob_debug!("Git root: {:?}", git_root);
     let lookup_paths = get_python_local_lookup_paths(&current_dir, &git_root);
     snob_debug!("Python lookup paths: {:?}", lookup_paths);
 
     let instant = std::time::Instant::now();
 
     // crawl the target directory
-    let workspace_files = crawl_workspace();
+    let workspace_files = crawl_workspace(&current_dir);
 
     // these need to retain some sort of order information
     let first_level_components: Vec<Vec<PathBuf>> = lookup_paths
@@ -89,17 +108,21 @@ fn main() -> Result<()> {
         first_level_components.len()
     );
 
-    // keep a copy of the tree
+    // keep a copy of the tree (contains all workspace files)
     let project_files = workspace_files
         .iter()
         .map(|p| p.to_string_lossy().to_string())
         .collect::<HashSet<String>>();
 
-    //snob_debug!("Project files: {:?}", project_files);
-
-    // build dependency graph
+    // build dependency graph (remove ignored files)
+    let file_ignores = build_glob_set(&config.files.ignores)?;
     let mut all_file_imports: Vec<HashMap<String, Vec<String>>> = workspace_files
         .par_iter()
+        .filter(|f| {
+            file_ignores
+                .matches(PathBuf::from(f).strip_prefix(&git_root).unwrap())
+                .is_empty()
+        })
         .filter_map(|f| {
             if let Ok(graph) = extract_file_dependencies(f, &project_files, &first_level_components)
             {
@@ -138,11 +161,19 @@ fn main() -> Result<()> {
 
     // filter impacted nodes to get the tests
     // test_*.py   or   *_test.py
-    let impacted_tests = impacted_nodes
-        .into_iter()
-        .filter(|f| is_test_file(f))
-        .collect::<HashSet<String>>();
-    snob_debug!("Impacted tests: {:?}", impacted_tests);
+    let ignored_tests = build_glob_set(&config.tests.ignores)?;
+    let tests_to_always_run = build_glob_set(&config.tests.always_run)?;
+
+    let snob_results = SnobResult::new(
+        impacted_nodes,
+        project_files.clone(),
+        &ignored_tests,
+        &tests_to_always_run,
+        &git_root,
+    );
+    snob_debug!(" impacted tests: {:?}", snob_results.impacted);
+    snob_debug!(" ignored tests: {:?}", snob_results.ignored);
+    snob_debug!(" always run tests: {:?}", snob_results.always_run);
 
     snob_info!(
         "Analyzed {:?} files in {:?}",
@@ -151,7 +182,7 @@ fn main() -> Result<()> {
     );
     snob_info!(
         "Found {}/{} impacted tests",
-        impacted_tests.len(),
+        snob_results.impacted.len(),
         workspace_files
             .iter()
             .filter(|f| is_test_file(f))
@@ -163,13 +194,67 @@ fn main() -> Result<()> {
     let stdout = std::io::stdout().lock();
     let mut writer = BufWriter::new(stdout);
 
-    for test in impacted_tests {
+    for test in snob_results.impacted {
         writeln!(writer, "{test}").unwrap();
     }
 
     writer.flush().unwrap();
 
     Ok(())
+}
+
+fn build_glob_set(globs: &HashSet<String>) -> Result<GlobSet> {
+    let mut builder = GlobSetBuilder::new();
+    for glob in globs {
+        builder.add(Glob::new(glob)?);
+    }
+    Ok(builder.build()?)
+}
+
+struct SnobResult {
+    pub impacted: HashSet<String>,
+    pub always_run: HashSet<String>,
+    pub ignored: HashSet<String>,
+}
+
+impl SnobResult {
+    pub fn new(
+        impacted: HashSet<String>,
+        workspace_files: HashSet<String>,
+        ignore_glob: &GlobSet,
+        always_run_glob: &GlobSet,
+        git_root: &Path,
+    ) -> Self {
+        let always_run_tests = workspace_files
+            .into_iter()
+            .filter(|f| {
+                !always_run_glob
+                    .matches(PathBuf::from(f).strip_prefix(git_root).unwrap())
+                    .is_empty()
+                    && is_test_file(f)
+            })
+            .collect::<HashSet<String>>();
+
+        let impacted_tests = impacted
+            .into_iter()
+            .filter(|f| is_test_file(f))
+            .collect::<HashSet<String>>();
+
+        let ignored_tests = impacted_tests
+            .iter()
+            .map(std::string::ToString::to_string)
+            .filter(|f| {
+                !ignore_glob
+                    .matches(PathBuf::from(f).strip_prefix(git_root).unwrap())
+                    .is_empty()
+            })
+            .collect::<HashSet<String>>();
+        Self {
+            impacted: impacted_tests.difference(&ignored_tests).cloned().collect(),
+            always_run: always_run_tests,
+            ignored: ignored_tests,
+        }
+    }
 }
 
 const PYTHONPATH_ENV: &str = "PYTHONPATH";

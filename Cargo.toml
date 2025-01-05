@@ -28,6 +28,9 @@ anyhow = "1.0.95"
 rayon = "1.10.0"
 log = "0.4.22"
 stderrlog = "0.6.0"
+globset = "0.4.15"
+toml = "0.8.19"
+serde = { version = "1.0.217", features = ["derive"] }
 
 [profile.release]
 # lto = "fat"

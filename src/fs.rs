@@ -19,9 +19,8 @@ fn create_walk_builder(current_dir: &std::path::PathBuf) -> WalkBuilder {
 /// * `current_dir` - The directory to start the crawl from
 /// # Returns
 /// * A tuple containing a list of files and a list of directories
-pub fn crawl_workspace() -> Vec<std::path::PathBuf> {
-    let current_dir = std::env::current_dir().unwrap();
-    let builder = create_walk_builder(&current_dir);
+pub fn crawl_workspace(current_dir: &std::path::PathBuf) -> Vec<std::path::PathBuf> {
+    let builder = create_walk_builder(current_dir);
     let (tx_file_handle, rx_file_handle) = std::sync::mpsc::channel();
 
     let parallel_walker = builder.build_parallel();
