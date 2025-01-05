@@ -1,11 +1,12 @@
 use anyhow::Result;
-use log::{debug, warn};
-use rustpython_ast::{Mod, ModModule, StmtImport, StmtImportFrom, Visitor};
-use rustpython_parser::{parse, Mode};
+use ruff_python_ast::{statement_visitor::StatementVisitor, Mod, StmtImport, StmtImportFrom};
+use ruff_python_parser::{parse, Mode};
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf, MAIN_SEPARATOR_STR},
 };
+
+use crate::{snob_debug, snob_warn};
 
 #[derive(Debug)]
 pub struct FileImports {
@@ -27,7 +28,7 @@ impl FileImports {
                 let p = self
                     .file
                     .ancestors()
-                    .nth(import.level)
+                    .nth(import.level as usize)
                     .expect("Relative import level too high");
                 Some(p.join(import.to_file_path()))
             } else {
@@ -48,7 +49,7 @@ impl FileImports {
                     ImportType::Package(p) => Some(p),
                     ImportType::Module(f) => Some(f),
                     ImportType::Object => {
-                        debug!("Resolving object import {:?}", import);
+                        snob_debug!("Resolving object import {:?}", import);
                         match determine_import_type(
                             import.parent().expect("Import path has no parent"),
                             project_files,
@@ -56,7 +57,7 @@ impl FileImports {
                             ImportType::Package(p) => Some(p),
                             ImportType::Module(f) => Some(f),
                             ImportType::Object => {
-                                warn!(
+                                snob_warn!(
                                     "Failed to resolve import {:?} in file {:?}",
                                     import.file_name().unwrap(),
                                     self.file
@@ -84,14 +85,14 @@ const PY_EXTENSION: &str = "py";
 fn determine_import_type(import: &Path, project_files: &HashSet<String>) -> ImportType {
     let init_file = import.join(INIT_FILE).to_string_lossy().to_string();
     if project_files.contains(&init_file) {
-        debug!("{:?} is a package", init_file);
+        snob_debug!("{:?} is a package", init_file);
         ImportType::Package(init_file)
     } else {
         let module_name = import
             .with_extension(PY_EXTENSION)
             .to_string_lossy()
             .to_string();
-        debug!("{:?} is a module", module_name);
+        snob_debug!("{:?} is a module", module_name);
         if project_files.contains(&module_name) {
             return ImportType::Module(module_name);
         }
@@ -102,7 +103,7 @@ fn determine_import_type(import: &Path, project_files: &HashSet<String>) -> Impo
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Import {
     pub segments: Vec<String>,
-    pub level: usize,
+    pub level: u32,
 }
 
 const IMPORT_SEPARATOR: &str = ".";
@@ -126,37 +127,35 @@ pub fn extract_file_dependencies(
 
     let mut graph = HashMap::new();
 
-    match parse(&file_contents, Mode::Module, "<embedded>") {
-        Ok(Mod::Module(ModModule {
-            range: _,
-            body,
-            type_ignores: _t,
-        })) => {
-            let mut visitor = ImportVisitor {
-                imports: HashSet::new(),
-            };
-            body.iter()
-                .for_each(|stmt| visitor.visit_stmt(stmt.clone()));
+    match parse(&file_contents, Mode::Module) {
+        Ok(parsed) => {
+            if let Mod::Module(ast) = parsed.syntax() {
+                let mut visitor = ImportVisitor {
+                    imports: HashSet::new(),
+                };
+                visitor.visit_body(&ast.body);
 
-            let file_imports = FileImports {
-                file: file.clone(),
-                imports: visitor.imports.into_iter().collect(),
-            };
+                let file_imports = FileImports {
+                    file: file.clone(),
+                    imports: visitor.imports.into_iter().collect(),
+                };
 
-            let resolved_imports =
-                file_imports.resolve_imports(project_files, first_level_components);
+                let resolved_imports =
+                    file_imports.resolve_imports(project_files, first_level_components);
 
-            for import in resolved_imports {
-                graph
-                    .entry(import)
-                    .or_insert_with(Vec::new)
-                    .push(file.to_string_lossy().to_string());
+                for import in resolved_imports {
+                    graph
+                        .entry(import)
+                        .or_insert_with(Vec::new)
+                        .push(file.to_string_lossy().to_string());
+                }
+
+                Ok(graph)
+            } else {
+                anyhow::bail!("Unexpected module type in file {:?}", file);
             }
-
-            Ok(graph)
         }
         Err(e) => anyhow::bail!("Error parsing file {:?}: {:?}", file, e),
-        _ => anyhow::bail!("Unexpected module type in file {:?}", file),
     }
 }
 
@@ -165,7 +164,7 @@ struct ImportVisitor {
     pub imports: HashSet<Import>,
 }
 
-impl Visitor for ImportVisitor {
+impl ImportVisitor {
     fn visit_stmt_import(&mut self, stmt: StmtImport) {
         // import a.b.c as c, d.e.f as f
         for alias in stmt.names {
@@ -183,8 +182,6 @@ impl Visitor for ImportVisitor {
 
     fn visit_stmt_import_from(&mut self, stmt: StmtImportFrom) {
         // from ..a.b import c, d
-        let level: usize = stmt.level.map_or(0, |l| l.to_usize());
-
         for alias in stmt.names {
             let mut segments = Vec::new();
             if let Some(module) = &stmt.module {
@@ -200,8 +197,21 @@ impl Visitor for ImportVisitor {
                     .split(IMPORT_SEPARATOR)
                     .map(std::string::ToString::to_string),
             );
-            let import = Import { segments, level };
+            let import = Import {
+                segments,
+                level: stmt.level,
+            };
             self.imports.insert(import);
+        }
+    }
+}
+
+impl StatementVisitor<'_> for ImportVisitor {
+    fn visit_stmt(&mut self, stmt: &ruff_python_ast::Stmt) {
+        match stmt {
+            ruff_python_ast::Stmt::Import(stmt) => self.visit_stmt_import(stmt.clone()),
+            ruff_python_ast::Stmt::ImportFrom(stmt) => self.visit_stmt_import_from(stmt.clone()),
+            _ => {}
         }
     }
 }

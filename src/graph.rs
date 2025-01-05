@@ -1,4 +1,3 @@
-use log::debug;
 use std::{
     collections::{HashMap, HashSet},
     io::{BufWriter, Write},
@@ -18,7 +17,6 @@ pub fn discover_impacted_nodes(
 
         impacted_nodes.insert(file.clone());
         if let Some(consumers) = dependency_graph.get(&file) {
-            debug!("{:?} is used by: {:?}", file, consumers);
             stack.extend(consumers.iter().cloned());
         }
     }
@@ -43,7 +41,6 @@ pub fn discover_impacted_nodes_with_graphviz(
 
         impacted_nodes.insert(file.clone());
         if let Some(consumers) = dependency_graph.get(&file) {
-            debug!("{:?} is used by: {:?}", file, consumers);
             stack.extend(consumers.iter().cloned());
             for consumer in consumers {
                 writeln!(writer, "    \"{consumer}\" -> \"{file}\";").unwrap();
