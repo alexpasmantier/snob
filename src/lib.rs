@@ -26,7 +26,6 @@ mod utils;
 
 // pytest --snob='git diff HEAD~1 --name-only'
 
-/// Formats the sum of two numbers as string.
 #[pyfunction]
 pub fn get_tests(changed_files: Vec<String>) -> PyResult<Vec<String>> {
     init_logging(&LoggingConfiguration::default());
@@ -38,7 +37,10 @@ pub fn get_tests(changed_files: Vec<String>) -> PyResult<Vec<String>> {
         &config,
         &current_dir,
         &git_root,
-        &changed_files.into_iter().collect::<HashSet<String>>(),
+        &changed_files
+            .into_iter()
+            .map(|c| git_root.join(c).to_string_lossy().to_string())
+            .collect::<HashSet<String>>(),
     );
     match snob_output {
         Ok(SnobOutput::All) => Ok(vec![]),

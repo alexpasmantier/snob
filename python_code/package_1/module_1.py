@@ -1,4 +1,3 @@
-from pytorch.something import something_else
 
 
 def function_1():
