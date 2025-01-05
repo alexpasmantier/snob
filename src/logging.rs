@@ -1,10 +1,13 @@
-use crate::cli::Cli;
+pub struct LoggingConfiguration {
+    pub verbosity_level: usize,
+    pub quiet: bool,
+}
 
-pub fn init_logging(cli: &Cli) {
-    if !cli.quiet {
+pub fn init_logging(configuration: &LoggingConfiguration) {
+    if configuration.quiet {
         stderrlog::new()
-            .verbosity(cli.verbosity_level)
-            .quiet(cli.quiet)
+            .verbosity(configuration.verbosity_level)
+            .quiet(configuration.quiet)
             .init()
             .unwrap();
     }

@@ -6,10 +6,10 @@ use std::{
 
 pub fn discover_impacted_nodes(
     dependency_graph: &HashMap<String, HashSet<String>>,
-    updated_files: &[String],
+    updated_files: &HashSet<String>,
 ) -> HashSet<String> {
     let mut impacted_nodes = HashSet::new();
-    let mut stack = updated_files.to_owned();
+    let mut stack = updated_files.iter().cloned().collect::<Vec<_>>();
     while let Some(file) = stack.pop() {
         if impacted_nodes.contains(&file) {
             continue;

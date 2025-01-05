@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use ignore::{types::TypesBuilder, DirEntry, WalkBuilder};
 
@@ -61,4 +61,21 @@ where
         }
     }
     Ok(())
+}
+
+pub fn make_files_relative_to<P>(files: &[P], base: &Path) -> Vec<String>
+where
+    P: AsRef<Path>,
+{
+    files
+        .iter()
+        .map(|f| {
+            let p = PathBuf::from(f.as_ref());
+            if p.is_relative() {
+                base.join(p).to_string_lossy().to_string()
+            } else {
+                p.to_string_lossy().to_string()
+            }
+        })
+        .collect::<Vec<_>>()
 }
