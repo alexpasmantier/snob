@@ -1,7 +1,7 @@
 use anyhow::Result;
 use ast::{extract_file_dependencies, INIT_FILE};
 use config::Config;
-use fs::{check_files_exist, crawl_workspace};
+use fs::crawl_workspace;
 use graph::discover_impacted_nodes;
 use logging::{init_logging, LoggingConfiguration};
 use rayon::prelude::*;
@@ -14,10 +14,7 @@ use utils::{
 };
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
-use pyo3::{
-    prelude::*,
-    types::{PyList, PySet},
-};
+use pyo3::prelude::*;
 
 mod ast;
 mod config;
@@ -31,27 +28,34 @@ mod utils;
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
-fn get_tests(changed_files: Py<PyList>) -> PyResult<Py<PyList>> {
+pub fn get_tests(changed_files: Vec<String>) -> PyResult<Vec<String>> {
+    init_logging(&LoggingConfiguration::default());
+
     let current_dir = std::env::current_dir()?;
     let git_root = get_repo_root(&current_dir);
     let config = Config::new(&git_root);
-    let snob_output =
-        get_impacted_tests_from_changed_files(
-            &config, 
-            &current_dir, 
-            &git_root, 
-            changed_files.extract(Python)
-        );
+    let snob_output = get_impacted_tests_from_changed_files(
+        &config,
+        &current_dir,
+        &git_root,
+        &changed_files.into_iter().collect::<HashSet<String>>(),
+    );
     match snob_output {
-        SnobOutput::All => Ok(".".to_string()),
-        SnobOutput::Partial(snob_results) => Ok(snob_results.impacted),
+        Ok(SnobOutput::All) => Ok(vec![]),
+        Ok(SnobOutput::Partial(snob_results)) => Ok(snob_results.impacted.into_iter().collect()),
+        Err(e) => {
+            snob_error!("Error: {:?}", e);
+            PyResult::Err(PyErr::new::<pyo3::exceptions::PyException, _>(format!(
+                "{e:?}",
+            )))
+        }
     }
 }
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn snob(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
+pub fn snob(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(get_tests, m)?)?;
     Ok(())
 }
 
@@ -63,7 +67,7 @@ fn build_glob_set(globs: &HashSet<String>) -> Result<GlobSet> {
     Ok(builder.build()?)
 }
 
-struct SnobResult {
+pub struct SnobResult {
     pub impacted: HashSet<String>,
     pub always_run: HashSet<String>,
     pub ignored: HashSet<String>,

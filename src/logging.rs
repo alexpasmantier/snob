@@ -3,6 +3,15 @@ pub struct LoggingConfiguration {
     pub quiet: bool,
 }
 
+impl Default for LoggingConfiguration {
+    fn default() -> Self {
+        Self {
+            verbosity_level: 2,
+            quiet: false,
+        }
+    }
+}
+
 pub fn init_logging(configuration: &LoggingConfiguration) {
     if configuration.quiet {
         stderrlog::new()
