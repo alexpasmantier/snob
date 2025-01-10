@@ -1,6 +1,10 @@
 use std::path::{Path, PathBuf};
 
+use crate::ast::INIT_FILE;
+use crate::utils::LookupPaths;
+use globset::{Glob, GlobSet, GlobSetBuilder};
 use ignore::{types::TypesBuilder, DirEntry, WalkBuilder};
+use rustc_hash::FxHashSet;
 
 fn create_walk_builder(current_dir: &std::path::PathBuf) -> WalkBuilder {
     let mut builder = WalkBuilder::new(current_dir);
@@ -48,7 +52,7 @@ pub fn crawl_workspace(current_dir: &std::path::PathBuf) -> Vec<std::path::PathB
     rx_file_handle.try_iter().collect()
 }
 
-pub fn check_files_exist<P>(files: &[P]) -> Result<(), std::io::Error>
+pub fn check_files_exist<P>(files: &FxHashSet<P>) -> Result<(), std::io::Error>
 where
     P: AsRef<Path>,
 {
@@ -78,4 +82,29 @@ where
             }
         })
         .collect::<Vec<_>>()
+}
+
+pub fn build_glob_set(globs: &FxHashSet<String>) -> anyhow::Result<GlobSet> {
+    let mut builder = GlobSetBuilder::new();
+    for glob in globs {
+        builder.add(Glob::new(glob)?);
+    }
+    Ok(builder.build()?)
+}
+
+pub fn get_first_level_components(lookup_paths: &LookupPaths) -> Vec<Vec<PathBuf>> {
+    lookup_paths
+        .local_paths
+        .iter()
+        .map(|p| {
+            p.read_dir()
+                .unwrap()
+                .map(|entry| entry.unwrap().path())
+                .filter(|p| {
+                    (p.is_file() && p.extension().is_some_and(|ext| ext == "py"))
+                        || (p.is_dir() && p.join(INIT_FILE).exists())
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect()
 }

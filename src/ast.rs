@@ -1,10 +1,9 @@
 use anyhow::Result;
 use ruff_python_ast::{statement_visitor::StatementVisitor, Mod, StmtImport, StmtImportFrom};
 use ruff_python_parser::{parse, Mode};
-use std::{
-    collections::{HashMap, HashSet},
-    path::{Path, PathBuf, MAIN_SEPARATOR_STR},
-};
+use std::path::{Path, PathBuf, MAIN_SEPARATOR_STR};
+
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::snob_debug;
 
@@ -19,9 +18,9 @@ pub const INIT_FILE: &str = "__init__.py";
 impl FileImports {
     pub fn resolve_imports(
         &self,
-        project_files: &HashSet<String>,
+        project_files: &FxHashSet<String>,
         first_level_components: &[Vec<PathBuf>],
-    ) -> HashSet<String> {
+    ) -> FxHashSet<String> {
         let imports = self.imports.iter().filter_map(|import| {
             if import.is_relative() {
                 // resolve relative imports
@@ -82,7 +81,7 @@ enum ImportType {
 
 const PY_EXTENSION: &str = "py";
 
-fn determine_import_type(import: &Path, project_files: &HashSet<String>) -> ImportType {
+fn determine_import_type(import: &Path, project_files: &FxHashSet<String>) -> ImportType {
     let init_file = import.join(INIT_FILE).to_string_lossy().to_string();
     if project_files.contains(&init_file) {
         snob_debug!("{:?} is a package", init_file);
@@ -120,18 +119,18 @@ impl Import {
 
 pub fn extract_file_dependencies(
     file: &PathBuf,
-    project_files: &HashSet<String>,
+    project_files: &FxHashSet<String>,
     first_level_components: &[Vec<PathBuf>],
-) -> Result<HashMap<String, Vec<String>>> {
+) -> Result<FxHashMap<String, Vec<String>>> {
     let file_contents = std::fs::read_to_string(file)?;
 
-    let mut graph = HashMap::new();
+    let mut graph = FxHashMap::default();
 
     match parse(&file_contents, Mode::Module) {
         Ok(parsed) => {
             if let Mod::Module(ast) = parsed.syntax() {
                 let mut visitor = ImportVisitor {
-                    imports: HashSet::new(),
+                    imports: FxHashSet::default(),
                 };
                 visitor.visit_body(&ast.body);
 
@@ -161,7 +160,7 @@ pub fn extract_file_dependencies(
 
 #[derive(Debug, Clone)]
 struct ImportVisitor {
-    pub imports: HashSet<Import>,
+    pub imports: FxHashSet<Import>,
 }
 
 impl ImportVisitor {

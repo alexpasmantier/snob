@@ -12,6 +12,15 @@ impl Default for LoggingConfiguration {
     }
 }
 
+impl LoggingConfiguration {
+    pub fn new(verbosity_level: usize, quiet: bool) -> Self {
+        Self {
+            verbosity_level,
+            quiet,
+        }
+    }
+}
+
 pub fn init_logging(configuration: &LoggingConfiguration) {
     if configuration.quiet {
         stderrlog::new()

@@ -1,4 +1,5 @@
-use std::{collections::HashSet, path::Path};
+use rustc_hash::FxHashSet;
+use std::path::Path;
 
 use serde::Deserialize;
 
@@ -19,10 +20,10 @@ pub struct Config {
 pub struct FilesConfig {
     /// the files listed here will be ignored by snob when crawling the workspace
     #[serde(default)]
-    pub ignores: HashSet<String>,
+    pub ignores: FxHashSet<String>,
     /// the files listed here will trigger all tests on change
     #[serde(default)]
-    pub run_all_tests_on_change: HashSet<String>,
+    pub run_all_tests_on_change: FxHashSet<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -30,10 +31,10 @@ pub struct FilesConfig {
 pub struct TestsConfig {
     /// the tests listed here will always run
     #[serde(default)]
-    pub always_run: HashSet<String>,
+    pub always_run: FxHashSet<String>,
     /// the tests listed here will never run
     #[serde(default)]
-    pub ignores: HashSet<String>,
+    pub ignores: FxHashSet<String>,
 }
 
 const CONFIG_FILE: &str = "snob.toml";

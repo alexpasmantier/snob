@@ -1,15 +1,14 @@
-use std::{
-    collections::{HashMap, HashSet},
-    path::{Path, PathBuf},
-};
+use globset::GlobSet;
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::path::{Path, PathBuf};
 
-pub fn merge_hashmaps<K, V, A>(hashmaps: &mut [HashMap<K, V>]) -> HashMap<K, V>
+pub fn merge_hashmaps<K, V, A>(hashmaps: &mut [FxHashMap<K, V>]) -> FxHashMap<K, V>
 where
     K: std::hash::Hash + Eq + Clone,
     V: Clone + Extend<A> + IntoIterator<Item = A>,
 {
     if hashmaps.is_empty() {
-        return HashMap::new();
+        return FxHashMap::default();
     }
     hashmaps
         .iter_mut()
@@ -45,14 +44,14 @@ where
 pub struct LookupPaths {
     // to retain discovery order
     pub local_paths: Vec<PathBuf>,
-    path_set: HashSet<PathBuf>,
+    path_set: FxHashSet<PathBuf>,
 }
 
 impl LookupPaths {
     pub fn new() -> Self {
         Self {
             local_paths: Vec::new(),
-            path_set: HashSet::new(),
+            path_set: FxHashSet::default(),
         }
     }
 
@@ -103,28 +102,28 @@ pub fn get_repo_root(current_dir: &PathBuf) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
+    use rustc_hash::FxHashMap;
 
     use super::*;
 
     #[test]
     fn test_merge_hashmaps() {
-        let mut hm1 = HashMap::new();
+        let mut hm1 = FxHashMap::default();
         hm1.insert("a", vec![1, 2]);
         hm1.insert("b", vec![2, 3]);
 
-        let mut hm2 = HashMap::new();
+        let mut hm2 = FxHashMap::default();
         hm2.insert("a", vec![1, 2, 4]);
         hm2.insert("b", vec![]);
 
-        let mut hm3 = HashMap::new();
+        let mut hm3 = FxHashMap::default();
         hm3.insert("a", vec![1, 2]);
         hm3.insert("c", vec![7, 8, 9]);
 
         let mut hashmaps = vec![hm1, hm2, hm3];
         let merged = merge_hashmaps(&mut hashmaps);
 
-        let mut expected = HashMap::new();
+        let mut expected = FxHashMap::default();
         expected.insert("a", vec![1, 2, 1, 2, 4, 1, 2]);
         expected.insert("b", vec![2, 3]);
         expected.insert("c", vec![7, 8, 9]);
@@ -184,3 +183,32 @@ mod tests {
         );
     }
 }
+
+pub fn should_run_all_tests(
+    updated_files: &FxHashSet<String>,
+    run_all_tests_on_change: &GlobSet,
+    git_root: &Path,
+) -> bool {
+    updated_files.iter().any(|f| {
+        !run_all_tests_on_change
+            .matches(PathBuf::from(f).strip_prefix(&git_root).unwrap())
+            .is_empty()
+    })
+}
+
+pub fn deduplicate_dependencies(
+    dependencies: FxHashMap<String, Vec<String>>,
+) -> FxHashMap<String, FxHashSet<String>> {
+    dependencies
+        .iter()
+        .map(|(k, v)| {
+            (
+                k.to_string(),
+                v.iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<FxHashSet<_>>(),
+            )
+        })
+        .collect::<FxHashMap<String, FxHashSet<String>>>()
+}
+
