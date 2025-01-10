@@ -61,13 +61,18 @@ impl LookupPaths {
         }
     }
 }
+impl Default for LookupPaths {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 // PYTHONPATH
 // python's import paths: [cwd, PYTHONPATH, others]
-pub fn get_python_local_lookup_paths(current_dir: &PathBuf, git_root: &PathBuf) -> LookupPaths {
+pub fn get_python_local_lookup_paths(current_dir: &Path, git_root: &PathBuf) -> LookupPaths {
     // ordered
     let pythonpath = get_pythonpath();
-    let mut local_paths = vec![current_dir.clone()];
+    let mut local_paths = vec![current_dir.to_path_buf()];
     local_paths.extend(pythonpath);
     let mut lookup_paths = LookupPaths::new();
     local_paths
@@ -91,8 +96,8 @@ pub fn get_pythonpath() -> Vec<PathBuf> {
     p.split(PYTHONPATH_SEPARATOR).map(PathBuf::from).collect()
 }
 
-pub fn get_repo_root(current_dir: &PathBuf) -> PathBuf {
-    let mut path = current_dir.clone();
+pub fn get_repo_root(current_dir: &Path) -> PathBuf {
+    let mut path = current_dir.to_path_buf();
     // let's cross our fingers here
     while !path.join(".git").exists() {
         path = path.parent().unwrap().to_path_buf();
@@ -191,7 +196,7 @@ pub fn should_run_all_tests(
 ) -> bool {
     updated_files.iter().any(|f| {
         !run_all_tests_on_change
-            .matches(PathBuf::from(f).strip_prefix(&git_root).unwrap())
+            .matches(PathBuf::from(f).strip_prefix(git_root).unwrap())
             .is_empty()
     })
 }
@@ -211,4 +216,3 @@ pub fn deduplicate_dependencies(
         })
         .collect::<FxHashMap<String, FxHashSet<String>>>()
 }
-

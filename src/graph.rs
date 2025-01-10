@@ -62,19 +62,18 @@ pub fn build_dependency_graph(
     workspace_files: &[PathBuf],
     project_files: &FxHashSet<String>,
     file_ignores: &GlobSet,
-    first_level_components: &Vec<Vec<PathBuf>>,
+    first_level_components: &[Vec<PathBuf>],
     git_root: &Path,
 ) -> Vec<FxHashMap<String, Vec<String>>> {
     workspace_files
         .par_iter()
         .filter(|f| {
             file_ignores
-                .matches(PathBuf::from(f).strip_prefix(&git_root).unwrap())
+                .matches(PathBuf::from(f).strip_prefix(git_root).unwrap())
                 .is_empty()
         })
         .filter_map(|f| {
-            if let Ok(graph) = extract_file_dependencies(f, &project_files, &first_level_components)
-            {
+            if let Ok(graph) = extract_file_dependencies(f, project_files, first_level_components) {
                 Some(graph)
             } else {
                 snob_error!("Failed to parse file {:?}", f);
