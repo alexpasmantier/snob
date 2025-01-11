@@ -55,9 +55,6 @@ jobs:
       # url: https://pypi.org/p/YOURPROJECT
 
     steps:
-      - name: change directory
-        run: cd pytest-snob
-
       - name: Retrieve release distributions
         uses: actions/download-artifact@v4
         with:
@@ -65,4 +62,4 @@ jobs:
           path: dist/
 
       - name: Publish release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@6f7e8d9c0b1a2c3d4e5f6a7b8c9d0e1f2a3b4c5d
+        uses: pypa/gh-action-pypi-publish@release/v1
