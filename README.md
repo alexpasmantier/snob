@@ -1,6 +1,6 @@
 <div aligne="center">
 
-![snob](./assets/snob.webp | width="600" snob, the picky test selector for python projects")
+![snob](./assets/snob.webp "snob, the picky test selector for python projects")
 
 **Picky test selector for python projects**
 
