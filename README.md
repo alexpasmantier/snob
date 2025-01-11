@@ -17,7 +17,7 @@ Because python is not the fastest language, this can sometimes make for a tediou
 if you're willing to shell out for more workers / parallelization).
 
 The whole idea behind `snob` is that one should only care about running _relevant_ tests for a given commit, that is
-tests covering files that are **impacted** by the changes, either directly or indirectly.
+tests covering files that are _impacted_ by the changes, either directly or indirectly.
 
 The increase in granularity when selecting the tests allows for faster and less costly CI runs, saving time, money
 and headaches for the whole family.
