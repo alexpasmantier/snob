@@ -1,6 +1,10 @@
 use globset::GlobSet;
+use pyo3::{exceptions::PyFileNotFoundError, PyErr};
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Display,
+    path::{Path, PathBuf},
+};
 
 pub fn merge_hashmaps<K, V, A>(hashmaps: &mut [FxHashMap<K, V>]) -> FxHashMap<K, V>
 where
@@ -96,13 +100,34 @@ pub fn get_pythonpath() -> Vec<PathBuf> {
     p.split(PYTHONPATH_SEPARATOR).map(PathBuf::from).collect()
 }
 
-pub fn get_repo_root(current_dir: &Path) -> PathBuf {
-    let mut path = current_dir.to_path_buf();
+#[derive(Debug)]
+pub struct GitRootError;
+
+impl Display for GitRootError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Could not find git root")
+    }
+}
+
+impl std::error::Error for GitRootError {}
+
+impl std::convert::From<GitRootError> for PyErr {
+    fn from(err: GitRootError) -> PyErr {
+        PyFileNotFoundError::new_err(err.to_string())
+    }
+}
+
+pub fn get_repo_root(current_dir: &Path) -> Result<PathBuf, GitRootError> {
+    let path = current_dir.to_path_buf();
     // let's cross our fingers here
     while !path.join(".git").exists() {
-        path = path.parent().unwrap().to_path_buf();
+        if let Some(path) = path.parent() {
+            path.to_path_buf();
+        } else {
+            return Err(GitRootError);
+        }
     }
-    path
+    Ok(path)
 }
 
 #[cfg(test)]

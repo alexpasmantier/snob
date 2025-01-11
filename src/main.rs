@@ -25,11 +25,11 @@ fn main() -> Result<()> {
     ));
 
     let current_dir = std::env::current_dir()?;
-    let git_root = utils::get_repo_root(&current_dir);
-    //snob_debug!("Git root: {:?}", git_root);
+    let git_root = utils::get_repo_root(&current_dir)?;
+    snob_debug!("Git root: {:?}", git_root);
 
     let config = config::Config::new(&git_root);
-    //snob_debug!("Config: {:?}", config);
+    snob_debug!("Config: {:?}", config);
 
     // files that were modified by the patch
     let input_files = if stdin::is_readable_stdin() {
@@ -41,22 +41,22 @@ fn main() -> Result<()> {
         .iter()
         .cloned()
         .collect::<FxHashSet<String>>();
-    //snob_debug!("Updated files: {:?}", updated_files);
+    snob_debug!("Updated files: {:?}", updated_files);
 
     fs::check_files_exist(&updated_files)?;
 
     let run_all_tests_on_change = fs::build_glob_set(&config.files.run_all_tests_on_change)?;
     if utils::should_run_all_tests(&updated_files, &run_all_tests_on_change, &git_root) {
         // exit early and run all tests
-        //snob_info!("Running all tests");
+        snob_info!("Running all tests");
         println!(".");
         return Ok(());
     }
 
     std::env::set_current_dir(&cli.target_directory)?;
-    //snob_debug!("Current directory: {:?}", current_dir);
+    snob_debug!("Current directory: {:?}", current_dir);
     let lookup_paths = utils::get_python_local_lookup_paths(&current_dir, &git_root);
-    //snob_debug!("Python lookup paths: {:?}", lookup_paths);
+    snob_debug!("Python lookup paths: {:?}", lookup_paths);
 
     let instant = std::time::Instant::now();
 
@@ -66,13 +66,13 @@ fn main() -> Result<()> {
     // these need to retain some sort of order information
     let first_level_components: Vec<PathBuf> = fs::get_first_level_components(&lookup_paths);
 
-    //snob_debug!("First level components: {:?}", first_level_components);
+    snob_debug!("First level components: {:?}", first_level_components);
 
-    //snob_debug!(
-    //    "Crawled {:?} files and {:?} directories",
-    //    workspace_files.len(),
-    //    first_level_components.len()
-    //);
+    snob_debug!(
+        "Crawled {:?} files and {:?} directories",
+        workspace_files.len(),
+        first_level_components.len()
+    );
 
     // keep a copy of the tree (contains all workspace files)
     let project_files = workspace_files

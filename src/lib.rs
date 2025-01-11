@@ -21,7 +21,7 @@ pub mod utils;
 #[pyfunction]
 pub fn get_tests(changed_files: Vec<String>) -> PyResult<Vec<String>> {
     let current_dir = std::env::current_dir()?;
-    let git_root = get_repo_root(&current_dir);
+    let git_root = get_repo_root(&current_dir)?;
 
     let config = Config::new(&git_root);
 
