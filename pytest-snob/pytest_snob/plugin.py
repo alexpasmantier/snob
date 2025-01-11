@@ -43,11 +43,9 @@ def pytest_collection_modifyitems(session, config, items: list[Item]):
             f"🧐 \x1b[92;3;4mSnob plugin:\x1b[m Selected \x1b[91m{len(test_files)}\x1b[m file(s)"
         )
 
-        pytest_selected = [item for item in items if item.fspath.strpath in test_files]
-        pytest_deselected = [
-            item for item in items if item.fspath.strpath not in test_files
-        ]
+        pytest_selected = {item for item in items if item.fspath.strpath in test_files}
+        pytest_deselected = set(items) - pytest_selected
 
-        config.hook.pytest_deselected(items=pytest_deselected)
+        config.hook.pytest_deselected(items=list(pytest_deselected))
 
-        items[:] = pytest_selected
+        items[:] = list(pytest_selected)
