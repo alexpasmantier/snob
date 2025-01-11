@@ -1,6 +1,6 @@
 <div aligne="center">
 
-![snob](./assets/snob.webp "snob, the picky test selector for python projects")
+![snob](./assets/snob.png "snob, the picky test selector for python projects")
 
 **Picky test selector for python projects**
 
@@ -16,7 +16,7 @@ For most python projects, running the full test suite for a given PR in a CI is 
 Because python is not the fastest language, this can sometimes make for a tedious experience (or a costly one
 if you're willing to shell out for more workers / parallelization).
 
-The whole behind `snob` is that one should only care about running _relevant_ tests for a given commit, that is
+The whole idea behind `snob` is that one should only care about running _relevant_ tests for a given commit, that is
 tests covering files that are **impacted** by the changes, either directly or indirectly.
 
 The increase in granularity when selecting the tests allows for faster and less costly CI runs, saving time, money
