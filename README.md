@@ -93,4 +93,4 @@ This project was inspired by outrageous recurring Jenkins / CircleCI monthly bil
 one irrelevant flaky test failure at a time.
 
 Also, we'd like to use the occasion to thank all the dedicated, passionate and hard-working open source maintainers of the excellent [rayon](https://github.com/rayon-rs/rayon), 
-[ruffpython_parser](https://github.com/astral-sh/ruff), [maturin](https://github.com/PyO3/maturin), [pyo3](https://github.com/PyO3/pyo3) amongst all the awesome projects which enabled us in this project. Shoulders, giants, true gratitude to all you.
+[ruffpython_parser](https://github.com/astral-sh/ruff), [maturin](https://github.com/PyO3/maturin), [pyo3](https://github.com/PyO3/pyo3) amongst all the awesome projects which enabled us in this project. Shoulders, giants, true gratitude to all of you.
