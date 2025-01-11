@@ -3,7 +3,7 @@
 #
 #    maturin generate-ci github
 #
-name: CI
+name: ci-snob-lib
 
 on:
   push:
