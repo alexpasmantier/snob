@@ -1,3 +1,4 @@
+import logging
 import os
 import subprocess
 
@@ -32,18 +33,36 @@ def pytest_addoption(parser):
         default=None,
         help="Commit hash to get the list of modified files",
     )
+    group.addoption(
+        "--snob-verbose",
+        action="store_true",
+        dest="snob_verbose",
+        default=False,
+        help="Enable verbose output for snob",
+    )
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 def pytest_collection_modifyitems(session, config, items: list[Item]):
+    verbose = config.getoption("snob_verbose")
+    logger = logging.getLogger("snob")
+    logger.setLevel(logging.INFO)
+
     commit_range = config.getoption("commit_range")
     if commit_range is not None:
         test_files = get_tests(get_modified_files(commit_range))
         print("")
-        print(
+        logger.info(
             f"🧐 \x1b[92;3;4mSnob plugin:\x1b[m Selected \x1b[91m{len(test_files)}\x1b[m file(s)"
         )
 
         pytest_selected = {item for item in items if item.fspath.strpath in test_files}
+        if verbose:
+            for item in pytest_selected:
+                logger.info(f"  - {item.nodeid}")
+
         pytest_deselected = set(items) - pytest_selected
 
         config.hook.pytest_deselected(items=list(pytest_deselected))
