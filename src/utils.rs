@@ -118,11 +118,11 @@ impl std::convert::From<GitRootError> for PyErr {
 }
 
 pub fn get_repo_root(current_dir: &Path) -> Result<PathBuf, GitRootError> {
-    let path = current_dir.to_path_buf();
+    let mut path = current_dir.to_path_buf();
     // let's cross our fingers here
     while !path.join(".git").exists() {
-        if let Some(path) = path.parent() {
-            path.to_path_buf();
+        if let Some(p) = path.parent() {
+            path = p.to_path_buf();
         } else {
             return Err(GitRootError);
         }
