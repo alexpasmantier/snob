@@ -1,4 +1,6 @@
-use std::io::{BufRead, stdin};
+#[allow(unused_imports)]
+use log::debug;
+use std::io::{stdin, BufRead};
 
 pub fn read_from_stdin() -> Vec<String> {
     let mut stdin = stdin().lock();

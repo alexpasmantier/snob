@@ -42,6 +42,11 @@ serde = { version = "1.0.217", features = ["derive"] }
 clap = { version = "4.5.23", features = ["cargo", "derive"] }
 rustc-hash = "2.1.0"
 
+
+[target.'cfg(windows)'.dependencies]
+winapi-util = "0.1.9"
+
+
 [profile.release]
 lto = "fat"
 codegen-units = 1
