@@ -24,13 +24,13 @@ and headaches for the whole family.
 
 ## Features
 
-`snob` leverages the excellent rust language to go through your project's dependency graph and determine 
+`snob` leverages the rust language to go through your project's dependency graph and determine 
 relations between your modules, packages and test files. Using those relations, it then determines for a given
 git commit (or range of commits) which files are _impacted_ and which _associated test files_ should be run.
 
 ## Installation
 
-To make things as easy as possible for developers, we've conveniently packaged all of `snob`'s goodness in a `pytest`
+To make things as easy as possible for developers, `snob`'s goodness is available through a `pytest`
 plugin, which you can directly install using your python packaging tool of choice (ahem... `uv`).
 
 This pytest plugin leverage a python package built using the excellent [pyo3](https://github.com/PyO3/pyo3) / [maturin](https://github.com/PyO3/maturin) toolchain.
