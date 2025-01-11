@@ -7,7 +7,7 @@ pytest-snob = "pytest_snob.plugin"
 
 [project]
 name = "pytest-snob"
-version = "0.1.0"
+version = "0.1.1"
 description = "A pytest plugin that only selects meaningful python tests to run."
 readme = "README.md"
 authors = [{ name = "Bertrand Chardon", email = "bertrand.chardon@gmail.com" },  {name = "Alexandre Pasmantier", email = "alex.pasmant@gmail.com"} ]
