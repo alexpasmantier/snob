@@ -92,11 +92,11 @@ pub fn build_glob_set(globs: &FxHashSet<String>) -> anyhow::Result<GlobSet> {
     Ok(builder.build()?)
 }
 
-pub fn get_first_level_components(lookup_paths: &LookupPaths) -> Vec<Vec<PathBuf>> {
+pub fn get_first_level_components(lookup_paths: &LookupPaths) -> Vec<PathBuf> {
     lookup_paths
         .local_paths
         .iter()
-        .map(|p| {
+        .flat_map(|p| {
             p.read_dir()
                 .unwrap()
                 .map(|entry| entry.unwrap().path())

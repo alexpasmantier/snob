@@ -64,7 +64,7 @@ fn main() -> Result<()> {
     let workspace_files = fs::crawl_workspace(&current_dir);
 
     // these need to retain some sort of order information
-    let first_level_components: Vec<Vec<PathBuf>> = fs::get_first_level_components(&lookup_paths);
+    let first_level_components: Vec<PathBuf> = fs::get_first_level_components(&lookup_paths);
 
     //snob_debug!("First level components: {:?}", first_level_components);
 

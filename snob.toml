@@ -1,3 +1,7 @@
+[general]
+verbosity_level = 2
+quiet = false
+
 [files]
 # the files listed here won't be considered by snob for import statements (glob format)
 ignores = ["files_to_ignore/**/*.py"]

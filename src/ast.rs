@@ -19,7 +19,7 @@ impl FileImports {
     pub fn resolve_imports(
         &self,
         project_files: &FxHashSet<String>,
-        first_level_components: &[Vec<PathBuf>],
+        first_level_components: &[PathBuf],
     ) -> FxHashSet<String> {
         let imports = self.imports.iter().filter_map(|import| {
             if import.is_relative() {
@@ -36,7 +36,6 @@ impl FileImports {
                 // check first_level_components
                 first_level_components
                     .iter()
-                    .flatten()
                     .find(|c| c.file_name().unwrap() == p.components().next().unwrap().as_os_str())
                     .map(|component| component.parent().unwrap().join(p))
             }
@@ -91,8 +90,8 @@ fn determine_import_type(import: &Path, project_files: &FxHashSet<String>) -> Im
             .with_extension(PY_EXTENSION)
             .to_string_lossy()
             .to_string();
-        snob_debug!("{:?} is a module", module_name);
         if project_files.contains(&module_name) {
+            snob_debug!("{:?} is a module", module_name);
             return ImportType::Module(module_name);
         }
         ImportType::Object
@@ -120,7 +119,7 @@ impl Import {
 pub fn extract_file_dependencies(
     file: &PathBuf,
     project_files: &FxHashSet<String>,
-    first_level_components: &[Vec<PathBuf>],
+    first_level_components: &[PathBuf],
 ) -> Result<FxHashMap<String, Vec<String>>> {
     let file_contents = std::fs::read_to_string(file)?;
 

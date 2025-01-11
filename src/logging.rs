@@ -36,6 +36,7 @@ macro_rules! snob_debug {
     ($($arg:tt)*) => {
         // Log and prepend "snob" to the log message
         log::debug!("snob: {}", format_args!($($arg)*))
+        //println!("snob: {}", format_args!($($arg)*))
     };
 }
 
@@ -44,6 +45,7 @@ macro_rules! snob_info {
     ($($arg:tt)*) => {
         // Log and prepend "snob" to the log message
         log::info!("snob: {}", format_args!($($arg)*))
+        //println!("snob: {}", format_args!($($arg)*))
     };
 }
 
@@ -52,6 +54,7 @@ macro_rules! snob_warn {
     ($($arg:tt)*) => {
         // Log and prepend "snob" to the log message
         log::warn!("snob: {}", format_args!($($arg)*))
+        //println!("snob: {}", format_args!($($arg)*))
     };
 }
 
@@ -60,5 +63,6 @@ macro_rules! snob_error {
     ($($arg:tt)*) => {
         // Log and prepend "snob" to the log message
         log::error!("snob: {}", format_args!($($arg)*))
+        //println!("snob: {}", format_args!($($arg)*))
     };
 }

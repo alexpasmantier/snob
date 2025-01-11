@@ -62,7 +62,7 @@ pub fn build_dependency_graph(
     workspace_files: &[PathBuf],
     project_files: &FxHashSet<String>,
     file_ignores: &GlobSet,
-    first_level_components: &[Vec<PathBuf>],
+    first_level_components: &[PathBuf],
     git_root: &Path,
 ) -> Vec<FxHashMap<String, Vec<String>>> {
     workspace_files

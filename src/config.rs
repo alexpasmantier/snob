@@ -7,12 +7,31 @@ use crate::snob_debug;
 
 #[derive(Debug, Default, Deserialize)]
 pub struct Config {
+    /// general configuration
+    #[serde(default)]
+    pub general: GeneralConfig,
     /// files-related configuration
     #[serde(default)]
     pub files: FilesConfig,
     /// tests-related configuration
     #[serde(default)]
     pub tests: TestsConfig,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct GeneralConfig {
+    #[serde(default = "default_verbosity_level")]
+    pub verbosity_level: usize,
+    #[serde(default = "default_quiet")]
+    pub quiet: bool,
+}
+
+fn default_verbosity_level() -> usize {
+    2
+}
+
+fn default_quiet() -> bool {
+    false
 }
 
 #[derive(Debug, Default, Deserialize)]

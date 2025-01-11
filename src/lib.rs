@@ -17,15 +17,21 @@ pub mod logging;
 pub mod results;
 pub mod stdin;
 pub mod utils;
-// pytest --snob='git diff HEAD~1 --name-only'
 
 #[pyfunction]
 pub fn get_tests(changed_files: Vec<String>) -> PyResult<Vec<String>> {
-    init_logging(&LoggingConfiguration::default());
-
     let current_dir = std::env::current_dir()?;
     let git_root = get_repo_root(&current_dir);
+
     let config = Config::new(&git_root);
+
+    let logging_configuration =
+        LoggingConfiguration::new(config.general.verbosity_level, config.general.quiet);
+    init_logging(&logging_configuration);
+
+    snob_debug!("Git root: {:?}", git_root);
+    snob_debug!("Config: {:?}", config);
+
     let snob_output = get_impacted_tests_from_changed_files(
         &config,
         &current_dir,
@@ -49,7 +55,7 @@ pub fn get_tests(changed_files: Vec<String>) -> PyResult<Vec<String>> {
 
 /// A Python module implemented in Rust.
 #[pymodule]
-pub fn snob(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn snob_lib(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(get_tests, m)?)?;
     Ok(())
 }
@@ -74,20 +80,20 @@ pub fn get_impacted_tests_from_changed_files(
     }
 
     let lookup_paths = get_python_local_lookup_paths(current_dir, git_root);
-    //snob_debug!("Python lookup paths: {:?}", lookup_paths);
+    snob_debug!("Python lookup paths: {:?}", lookup_paths);
 
     // crawl the target directory
     let workspace_files = crawl_workspace(current_dir);
 
     // these need to retain some sort of order information
-    let first_level_components: Vec<Vec<PathBuf>> = fs::get_first_level_components(&lookup_paths);
-    //snob_debug!("First level components: {:?}", first_level_components);
+    let first_level_components: Vec<PathBuf> = fs::get_first_level_components(&lookup_paths);
+    snob_debug!("First level components: {:?}", first_level_components);
 
-    //snob_debug!(
-    //    "Crawled {:?} files and {:?} directories",
-    //    workspace_files.len(),
-    //    first_level_components.len()
-    //);
+    snob_debug!(
+        "Crawled {:?} files and {:?} directories",
+        workspace_files.len(),
+        first_level_components.len()
+    );
 
     // keep a copy of the tree (contains all workspace files)
     let project_files = workspace_files
