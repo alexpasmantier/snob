@@ -1,6 +1,6 @@
-<div aligne="center">
+<div align="center">
 
-![snob](./assets/snob.png "snob, the picky test selector for python projects")
+<img src="https://github.com/alexpasmantier/snob/raw/main/assets/snob.png" width="320" alt="snob, the picky test selector for python projects">
 
 **Picky test selector for python projects**
 
