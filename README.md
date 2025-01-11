@@ -6,11 +6,11 @@
 
 </div>
 
-## DISCLAIMER
+## 🖐️ DISCLAIMER
 
 `snob` is still in an early stage, we'll be adding more polish in the days/weeks to come
 
-## About
+## 🧐 About
 
 For most python projects, running the full test suite for a given PR in a CI is the law of the land.
 Because python is not the fastest language, this can sometimes make for a tedious experience (or a costly one
@@ -22,20 +22,20 @@ tests covering files that are _impacted_ by the changes, either directly or indi
 The increase in granularity when selecting the tests allows for faster and less costly CI runs, saving time, money
 and headaches for the whole family.
 
-## Features
+## ✨ Features
 
 `snob` leverages the rust language to go through your project's dependency graph and determine 
 relations between your modules, packages and test files. Using those relations, it then determines for a given
 git commit (or range of commits) which files are _impacted_ and which _associated test files_ should be run.
 
-## Installation
+## 🖥️ Installation
 
 To make things as easy as possible for developers, `snob`'s goodness is available through a `pytest`
 plugin, which you can directly install using your python packaging tool of choice (ahem... `uv`).
 
 This pytest plugin leverage a python package built using the excellent [pyo3](https://github.com/PyO3/pyo3) / [maturin](https://github.com/PyO3/maturin) toolchain.
 
-## Usage
+## 💪 Usage
 
 first, install `snob`
 
@@ -51,7 +51,7 @@ pytest --commit-range d68ae21..af8acc9
 # that's it 🔥
 ```
 
-## Configuration
+## ⚒️ Configuration
 
 `snob` can be configured through a configuration file called `snob.toml` or through a section of
 your pre-existing project configuration file `pyproject.toml`
@@ -81,13 +81,13 @@ ignores = ["some_expensive_test_that_runs_elsewhere.py"]
 # the tests listed here will always run (has higher priority than ignores)
 always-run = ["tests/mandatory_tests/**/*.py"]
 ````
-## Contributions
+## 🤝 Contributions
 
 Contributions and pull requests are welcome.
 
 So are issues and ideas, but just like when streaming in 8K, mind the bandwidth.
 
-## Credits
+## 🙏 Credits
 
 This project was inspired by outrageous recurring Jenkins / CircleCI monthly bills and those 38 minutes test suite runs, gnawing at your soul
 one irrelevant flaky test failure at a time.
