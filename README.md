@@ -24,14 +24,16 @@ and headaches for the whole family.
 
 ## Features
 
-`snob` leverages the excellent **rust** language to go through your project's dependency graph and determine 
+`snob` leverages the excellent rust language to go through your project's dependency graph and determine 
 relations between your modules, packages and test files. Using those relations, it then determines for a given
 git commit (or range of commits) which files are _impacted_ and which _associated test files_ should be run.
 
 ## Installation
 
 To make things as easy as possible for developers, we've conveniently packaged all of `snob`'s goodness in a `pytest`
-plugin, which you can directly install using your python packaging tool of choice (ahem... `uv`)
+plugin, which you can directly install using your python packaging tool of choice (ahem... `uv`).
+
+This pytest plugin leverage a python package built using the excellent [pyo3](https://github.com/PyO3/pyo3) / [maturin](https://github.com/PyO3/maturin) toolchain.
 
 ## Usage
 
@@ -81,12 +83,14 @@ always-run = ["tests/mandatory_tests/**/*.py"]
 ````
 ## Contributions
 
-Contributions, issues and pull requests are welcome.
+Contributions and pull requests are welcome.
+
+So are issues and ideas, but just like when streaming in 8K, mind the bandwidth.
 
 ## Credits
 
-This project was inspired by your Jenkins / CircleCI monthly bills, your 28 minutes test suite and your flaky failures
-on tests that are absolutely irrelevant to your commit.
+This project was inspired by outrageous recurring Jenkins / CircleCI monthly bills and those 38 minutes test suite runs, gnawing at your soul
+one irrelevant flaky test failure at a time.
 
-Also, we'd like to use the occasion to thank all open source maintainers of the excellent rayon, ruffpython_parser,
-maturin and pyo3 repositories which enabled us in this project.
+Also, we'd like to use the occasion to thank all the dedicated, passionate and hard-working open source maintainers of the excellent [rayon](https://github.com/rayon-rs/rayon), 
+[ruffpython_parser](https://github.com/astral-sh/ruff), [maturin](https://github.com/PyO3/maturin), [pyo3](https://github.com/PyO3/pyo3) amongst all the awesome projects which enabled us in this project. Shoulders, giants, true gratitude to all you.
