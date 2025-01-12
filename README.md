@@ -33,7 +33,7 @@ git commit (or range of commits) which files are _impacted_ and which _associate
 To make things as easy as possible for developers, `snob`'s goodness is available through a `pytest`
 plugin, which you can directly install using your python packaging tool of choice (ahem... `uv`).
 
-This pytest plugin leverage a python package built using the excellent [pyo3](https://github.com/PyO3/pyo3) / [maturin](https://github.com/PyO3/maturin) toolchain.
+This pytest plugin leverages a python package built using the [pyo3](https://github.com/PyO3/pyo3) / [maturin](https://github.com/PyO3/maturin) toolchain.
 
 ## 💪 Usage
 
@@ -89,8 +89,8 @@ So are issues and ideas, but just like when streaming in 8K, mind the bandwidth.
 
 ## 🙏 Credits
 
-This project was inspired by outrageous recurring Jenkins / CircleCI monthly bills and those 38 minutes test suite runs, gnawing at your soul
+This project was inspired by outrageous recurring Jenkins / CircleCI monthly bills and those 38 minutes test suite runs gnawing at your soul
 one irrelevant flaky test failure at a time.
 
 Also, we'd like to use the occasion to thank all the dedicated, passionate and hard-working open source maintainers of the excellent [rayon](https://github.com/rayon-rs/rayon), 
-[ruffpython_parser](https://github.com/astral-sh/ruff), [maturin](https://github.com/PyO3/maturin), [pyo3](https://github.com/PyO3/pyo3) amongst all the awesome projects which enabled us in this project. Shoulders, giants, true gratitude to all of you.
+[ruffpython_parser](https://github.com/astral-sh/ruff), [maturin](https://github.com/PyO3/maturin), [pyo3](https://github.com/PyO3/pyo3) amongst all the awesome projects which made our life easier while building `snob`. Shoulders, giants, true gratitude to all of you.
