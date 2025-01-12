@@ -27,7 +27,3 @@ requires-python = ">=3.9"
 
 [project.urls]
 Homepage = "https://github.com/alexpasmantier/snob"
-
-[tool.setuptools]
-long_description = "file:README.md"
-long_description_content_type = "text/markdown"
