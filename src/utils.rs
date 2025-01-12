@@ -30,8 +30,10 @@ where
         .clone()
 }
 
+// see https://docs.python.org/3/library/sys_path_init.html
 const PYTHONPATH_ENV: &str = "PYTHONPATH";
 
+// see https://docs.pytest.org/en/stable/explanation/goodpractices.html#conventions-for-python-test-discovery
 pub fn is_test_file<P>(file: P) -> bool
 where
     P: AsRef<Path>,
@@ -71,7 +73,6 @@ impl Default for LookupPaths {
     }
 }
 
-// PYTHONPATH
 // python's import paths: [cwd, PYTHONPATH, others]
 pub fn get_python_local_lookup_paths(current_dir: &Path, git_root: &PathBuf) -> LookupPaths {
     // ordered
@@ -86,6 +87,9 @@ pub fn get_python_local_lookup_paths(current_dir: &Path, git_root: &PathBuf) -> 
     lookup_paths
 }
 
+// Note that on Windows, paths in this variable must be separated by semicolons,
+// to distinguish them from the colon used in drive identifiers
+// see https://docs.python.org/3/using/windows.html#windows-finding-modules
 #[cfg(target_os = "windows")]
 pub const PYTHONPATH_SEPARATOR: &str = ";";
 

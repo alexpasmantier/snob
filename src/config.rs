@@ -18,6 +18,7 @@ pub struct Config {
     pub tests: TestsConfig,
 }
 
+// FIXME: not sure we're actually using this
 #[derive(Debug, Default, Deserialize)]
 pub struct GeneralConfig {
     #[serde(default = "default_verbosity_level")]
@@ -56,14 +57,14 @@ pub struct TestsConfig {
     pub ignores: FxHashSet<String>,
 }
 
-const CONFIG_FILE: &str = "snob.toml";
+const CONFIG_FILE_SNOB: &str = "snob.toml";
 const CONFIG_FILE_PYPROJECT: &str = "pyproject.toml";
 
 impl Config {
     pub fn new(git_root: &Path) -> Self {
         // try to find the config file at `$GIT_ROOT/snob.toml`
-        if let Ok(config) = std::fs::read_to_string(git_root.join(CONFIG_FILE)) {
-            snob_debug!("Found config file at {:?}", git_root.join(CONFIG_FILE));
+        if let Ok(config) = std::fs::read_to_string(git_root.join(CONFIG_FILE_SNOB)) {
+            snob_debug!("Found config file at {:?}", git_root.join(CONFIG_FILE_SNOB));
             return toml::from_str(&config).unwrap();
         // if it doesn't exist, check `$GIT_ROOT/pyproject.toml`
         } else if let Ok(config) = std::fs::read_to_string(git_root.join(CONFIG_FILE_PYPROJECT)) {
