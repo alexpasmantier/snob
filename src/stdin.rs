@@ -24,8 +24,7 @@ pub fn read_from_stdin() -> Vec<String> {
 }
 
 /// Heuristic to determine if stdin is readable.
-///
-/// This is used to determine if we should use the stdin channel.
+/// this is useful for the case where users pipe file names into snob directly
 pub fn is_readable_stdin() -> bool {
     use std::io::IsTerminal;
 

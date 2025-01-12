@@ -10,6 +10,9 @@ pub struct SnobResult {
     pub ignored: HashSet<String>,
 }
 
+// ultimately, what test files should be run or not is determined by modifications contained
+// by the commit, but also by user configuration (ignored files, tests to always run, etc)
+// this selection logic is centralized here
 impl SnobResult {
     pub fn new(
         impacted: FxHashSet<String>,
@@ -49,4 +52,3 @@ impl SnobResult {
         }
     }
 }
-

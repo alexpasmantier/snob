@@ -24,20 +24,22 @@ impl FileImports {
         let imports = self.imports.iter().filter_map(|import| {
             if import.is_relative() {
                 // resolve relative imports
-                let p = self
+                let path = self
                     .file
                     .ancestors()
                     .nth(import.level as usize)
                     .expect("Relative import level too high");
-                Some(p.join(import.to_file_path()))
+                Some(path.join(import.to_file_path()))
             } else {
                 // resolve absolute (python) imports
-                let p = import.to_file_path();
+                let path = import.to_file_path();
                 // check first_level_components
                 first_level_components
                     .iter()
-                    .find(|c| c.file_name().unwrap() == p.components().next().unwrap().as_os_str())
-                    .map(|component| component.parent().unwrap().join(p))
+                    .find(|c| {
+                        c.file_name().unwrap() == path.components().next().unwrap().as_os_str()
+                    })
+                    .map(|component| component.parent().unwrap().join(path))
             }
         });
 
@@ -73,8 +75,12 @@ impl FileImports {
 }
 
 enum ImportType {
+    // a python package is being imported, that is a folder containing an __init__.py file
     Package(String),
+    // a python module is being imported, that is a regular python file
     Module(String),
+    // an object is being imported from a module or package, might be a class, a constant or
+    // maybe a function
     Object,
 }
 

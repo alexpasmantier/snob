@@ -31,7 +31,7 @@ fn main() -> Result<()> {
     let config = config::Config::new(&git_root);
     snob_debug!("Config: {:?}", config);
 
-    // files that were modified by the patch
+    // files that were modified by the range of commits
     let input_files = if stdin::is_readable_stdin() {
         stdin::read_from_stdin()
     } else {
@@ -58,6 +58,7 @@ fn main() -> Result<()> {
     let lookup_paths = utils::get_python_local_lookup_paths(&current_dir, &git_root);
     snob_debug!("Python lookup paths: {:?}", lookup_paths);
 
+    // FIXME: we might want to measure time differently here
     let instant = std::time::Instant::now();
 
     // crawl the target directory
@@ -107,7 +108,8 @@ fn main() -> Result<()> {
     };
 
     // filter impacted nodes to get the tests
-    // test_*.py   or   *_test.py
+    // just like `pytest` we consider files that looks like either test_*.py or *_test.py
+    // see https://docs.pytest.org/en/stable/explanation/goodpractices.html#conventions-for-python-test-discovery
     let ignored_tests = fs::build_glob_set(&config.tests.ignores)?;
     let tests_to_always_run = fs::build_glob_set(&config.tests.always_run)?;
 
@@ -142,10 +144,10 @@ fn main() -> Result<()> {
     let mut writer = BufWriter::new(stdout);
 
     for test in snob_results.impacted {
-        writeln!(writer, "{test}").unwrap();
+        writeln!(writer, "{test}")?;
     }
 
-    writer.flush().unwrap();
+    writer.flush()?;
 
     Ok(())
 }

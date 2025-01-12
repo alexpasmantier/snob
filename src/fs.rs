@@ -84,6 +84,8 @@ where
         .collect::<Vec<_>>()
 }
 
+// this function is used to build globs from the settings defined in the user configuration
+// file
 pub fn build_glob_set(globs: &FxHashSet<String>) -> anyhow::Result<GlobSet> {
     let mut builder = GlobSetBuilder::new();
     for glob in globs {
@@ -92,6 +94,10 @@ pub fn build_glob_set(globs: &FxHashSet<String>) -> anyhow::Result<GlobSet> {
     Ok(builder.build()?)
 }
 
+// first level components are either packages or modules defined at the top level
+// of the lookup paths used by python's import system
+// those first level components allow us to determine how to handle external packages
+// down the line
 pub fn get_first_level_components(lookup_paths: &LookupPaths) -> Vec<PathBuf> {
     lookup_paths
         .local_paths
