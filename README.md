@@ -38,7 +38,7 @@ This pytest plugin leverages the [snob-lib](https://pypi.org/project/snob-lib/) 
 
 ## 💪 Usage
 
-install the `pytest-snob` pytest plugin
+first, install the `pytest-snob` pytest plugin
 
 ```bash
 # create a ven and source that venv, then
@@ -48,9 +48,9 @@ then run pytest on a range of commits (most often, this would be between your br
 
 ```bash
 pytest --commit-range d68ae21..af8acc9
-
-# that's it 🔥
 ```
+
+that's it 🔥
 
 ## ⚒️ Configuration
 
