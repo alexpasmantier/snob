@@ -30,10 +30,10 @@ git commit (or range of commits) which files are _impacted_ and which _associate
 
 ## 🖥️ Installation
 
-To make things as easy as possible for developers, `snob`'s goodness is available through a `pytest`
-plugin, which you can directly install using your python packaging tool of choice (ahem... `uv`).
+To make things as easy as possible for developers, `snob`'s goodness is available through the [pytest-snob](https://pypi.org/project/pytest-snob/)
+pytest plugin, which you can directly install using your python packaging tool of choice (likely `uv`, but could be `pip` or `poetry`).
 
-This pytest plugin leverages a python package built using the [pyo3](https://github.com/PyO3/pyo3) / [maturin](https://github.com/PyO3/maturin) toolchain.
+This pytest plugin leverages the [snob-lib](https://pypi.org/project/snob-lib/) built using the [pyo3](https://github.com/PyO3/pyo3) / [maturin](https://github.com/PyO3/maturin) toolchain.
 
 ## 💪 Usage
 
