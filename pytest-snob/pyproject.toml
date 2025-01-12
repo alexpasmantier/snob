@@ -18,6 +18,8 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
 ]
+long_description = "file:README.md"
+long_description_content_type = "text/markdown"
 keywords = ["snob", "pytest", "testing", "rust", "rts", "maturin", "pyo3"]
 dependencies = [
     "snob_lib",
