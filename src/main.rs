@@ -108,7 +108,7 @@ fn main() -> Result<()> {
     };
 
     // filter impacted nodes to get the tests
-    // just like `pytest` we consider files that looks like either test_*.py or *_test.py
+    // just like `pytest` we consider files that look like either test_*.py or *_test.py
     // see https://docs.pytest.org/en/stable/explanation/goodpractices.html#conventions-for-python-test-discovery
     let ignored_tests = fs::build_glob_set(&config.tests.ignores)?;
     let tests_to_always_run = fs::build_glob_set(&config.tests.always_run)?;
