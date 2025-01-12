@@ -38,13 +38,13 @@ This pytest plugin leverages the [snob-lib](https://pypi.org/project/snob-lib/) 
 
 ## 💪 Usage
 
-first, install `snob`
+install the `pytest-snob` pytest plugin
 
 ```bash
 # create a ven and source that venv, then
 uv pip install pytest-snob
 ```
-then run pytest with the appropriate arguments
+then run pytest on a range of commits (most often, this would be between your branch and `main`/`master`, in your CI)
 
 ```bash
 pytest --commit-range d68ae21..af8acc9
