@@ -23,6 +23,14 @@ permissions:
   contents: read
 
 jobs:
+  bump_package_version:
+    if: ${{ startsWith(github.ref, 'refs/tags/lib@v') }}
+    steps:
+      name: extract version from tag
+      # the # operator removes the "refs/tags/lib@v" part from the GITHUB_REF
+      # in the end we're left with the version number, which we store in a GITHUB
+      # environment variable
+      run: echo "SNOB_LIB_PACKAGE_VERSION=${GITHUB_REF#refs/tags/lib@v}" >> $GITHUB_ENV
   linux:
     runs-on: ${{ matrix.platform.runner }}
     strategy:
@@ -160,7 +168,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ startsWith(github.ref, 'refs/tags/lib@v') || github.event_name == 'workflow_dispatch' }}
     needs: [linux, musllinux, windows, macos, sdist]
     permissions:
       # Use to sign the release artifacts
@@ -174,9 +182,9 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
-          subject-path: 'wheels-*/*'
+          subject-path: 'wheels-*/*'  
       - name: Publish to PyPI
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/lib@v') }}
         uses: PyO3/maturin-action@v1
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
