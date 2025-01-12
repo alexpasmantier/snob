@@ -6,7 +6,12 @@
 name: ci-snob-lib
 
 on:
+  pull_request:
+    paths:
+      - 'src/**'
   push:
+    paths:
+      - 'src/**'
     branches:
       - main
       - master
