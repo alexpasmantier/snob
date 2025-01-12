@@ -24,6 +24,7 @@ jobs:
   release-build:
     runs-on: ubuntu-latest
 
+    if: ${{ startsWith(github.ref, 'refs/tags/plugin@v') }}
     steps:
       - uses: actions/checkout@v4
 
