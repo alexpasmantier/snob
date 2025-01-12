@@ -1,7 +1,5 @@
 <div align="center">
-![GitHub branch check runs](https://img.shields.io/github/check-runs/alexpasmantier/snob/main)
-![GitHub License](https://img.shields.io/github/license/alexpasmantier/snob)
-![Github stars](https://img.shields.io/github/stars/alexpasmantier/snob)
+
 
 <img src="https://github.com/alexpasmantier/snob/raw/main/assets/snob.png" width="480" alt="snob, the picky test selector for python projects">
 
