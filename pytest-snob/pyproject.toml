@@ -18,8 +18,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
 ]
-long_description = "file:README.md"
-long_description_content_type = "text/markdown"
 keywords = ["snob", "pytest", "testing", "rust", "rts", "maturin", "pyo3"]
 dependencies = [
     "snob_lib",
@@ -29,3 +27,7 @@ requires-python = ">=3.9"
 
 [project.urls]
 Homepage = "https://github.com/alexpasmantier/snob"
+
+[tool.setuptools]
+long_description = "file:README.md"
+long_description_content_type = "text/markdown"
