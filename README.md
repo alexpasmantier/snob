@@ -8,7 +8,7 @@
 
 ## 🖐️ DISCLAIMER
 
-`snob` is still in an early stage, we'll be adding more polish in the days/weeks to come
+`snob` is still early stage, we'll be adding more polish in the days/weeks to come
 
 ## 🧐 About
 
