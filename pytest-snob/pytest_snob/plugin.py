@@ -32,24 +32,20 @@ def pytest_addoption(parser):
         default=None,
         help="Commit hash to get the list of modified files",
     )
-    # group.addoption(
-    #     "--snob-verbose",
-    #     action="store_true",
-    #     dest="snob_verbose",
-    #     default=False,
-    #     help="Enable verbose output for snob",
-    # )
-
 
 def pytest_collection_modifyitems(session, config, items: list[Item]):
     commit_range = config.getoption("commit_range")
     if commit_range is not None:
+        # NOTE: the test files will be retrieved using `snob_lib` here
+        # based on the dependency graph of the application
         test_files = get_tests(get_modified_files(commit_range))
+        # this is because a character is eaten at the beginning of next line without it
         print("")
         print(
             f"🧐 \x1b[92;3;4mSnob plugin:\x1b[m Selected \x1b[91m{len(test_files)}\x1b[m file(s)"
         )
-
+        # compute some sort of intersection between the files picked by pytest
+        # and the files picked by snob
         pytest_selected = {item for item in items if item.fspath.strpath in test_files}
         for item in pytest_selected:
             print(f"  - {item.nodeid}")
@@ -57,5 +53,5 @@ def pytest_collection_modifyitems(session, config, items: list[Item]):
         pytest_deselected = set(items) - pytest_selected
 
         config.hook.pytest_deselected(items=[t for t in pytest_deselected])
-
+        # mutation seems necessary here
         items[:] = [t for t in pytest_selected]
