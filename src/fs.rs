@@ -84,8 +84,7 @@ where
         .collect::<Vec<_>>()
 }
 
-// this function is used to build globs from the settings defined in the user configuration
-// file
+// this function is used to build globs from the settings defined in the user configuration file
 pub fn build_glob_set(globs: &FxHashSet<String>) -> anyhow::Result<GlobSet> {
     let mut builder = GlobSetBuilder::new();
     for glob in globs {
