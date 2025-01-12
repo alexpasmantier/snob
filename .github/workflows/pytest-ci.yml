@@ -12,15 +12,19 @@ permissions:
   contents: read
 
 jobs:
-  bump_package_version:
+  debug_job:
     runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/tags/plugin@v') }}
     steps:
       - name: Debug ref
         run: |
           echo "GITHUB_REF: ${GITHUB_REF}"
           echo "GITHUB_REF_TYPE: ${GITHUB_REF_TYPE}"
           echo "GITHUB_REF_NAME: ${GITHUB_REF_NAME}"
+      
+  bump_package_version:
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/tags/plugin@v') }}
+    steps:
       - uses: actions/checkout@v4
       - name: extract version from tag
         # the # operator removes the "refs/tags/lib@v" part from the GITHUB_REF
