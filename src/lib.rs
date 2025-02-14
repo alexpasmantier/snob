@@ -4,7 +4,7 @@ use fs::crawl_workspace;
 use graph::discover_impacted_nodes;
 use logging::{init_logging, LoggingConfiguration};
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use utils::{get_python_local_lookup_paths, get_repo_root, merge_hashmaps};
 
 use pyo3::prelude::*;
@@ -17,6 +17,12 @@ pub mod logging;
 pub mod results;
 pub mod stdin;
 pub mod utils;
+
+//#[pyfunction]
+//pub fn get_config(git_root: &Path) -> PyResult<Config> {
+//    let config = Config::new(&git_root);
+//    Ok(config)
+//}
 
 #[pyfunction]
 pub fn get_tests(changed_files: Vec<String>) -> PyResult<Vec<String>> {

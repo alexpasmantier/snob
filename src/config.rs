@@ -1,3 +1,4 @@
+//use pyo3::pyclass;
 use rustc_hash::FxHashSet;
 use std::path::Path;
 
@@ -5,6 +6,7 @@ use serde::Deserialize;
 
 use crate::snob_debug;
 
+//#[pyclass]
 #[derive(Debug, Default, Deserialize)]
 pub struct Config {
     /// general configuration
