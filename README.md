@@ -1,6 +1,5 @@
 <div align="center">
-<img width="128" alt="snob-logo" src="https://github.com/user-attachments/assets/18d53f55-8c85-4352-9077-808475b80b6b" />
-<h1>🧐 Snob</h1>
+    <img width="1280" height="329" alt="snob-logo" src="https://github.com/user-attachments/assets/35b937de-2cee-4f7e-b399-0cbe92f77c35" />
 
 _Only run tests that matter, saving time and resources._
 
