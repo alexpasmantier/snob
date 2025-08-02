@@ -1,14 +1,11 @@
 name: Release Rust CLI Binaries
-
 on:
   push:
     tags:
       - 'cli@v*'
   workflow_dispatch:
-
 permissions:
   contents: write
-
 jobs:
   create-release:
     runs-on: ubuntu-latest
@@ -19,7 +16,6 @@ jobs:
       - name: Get version from tag
         id: get_version
         run: echo "version=${GITHUB_REF#refs/tags/cli@v}" >> $GITHUB_OUTPUT
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -30,33 +26,23 @@ jobs:
           release_name: CLI v${{ steps.get_version.outputs.version }}
           body: |
             # Snob CLI v${{ steps.get_version.outputs.version }}
-            
+
             Standalone binaries for the Snob CLI tool.
-            
+
             ## Installation
-            
+
             ### Quick Install (Linux/macOS)
             ```bash
             curl -sSL https://raw.githubusercontent.com/alexpasmantier/snob/main/install.sh | bash
             ```
-            
+
             ### Manual Download
             Download the appropriate binary for your platform below and add it to your PATH.
-            
-            ## Usage
-            ```bash
-            # Test your current changes
-            git diff --name-only | snob | xargs pytest
-            
-            # Test specific files
-            snob src/auth.py src/utils.py | xargs pytest
-            ```
-            
+
             ## Checksums
             Verify your download with the provided SHA256 checksums.
           draft: false
           prerelease: false
-
   build:
     needs: create-release
     runs-on: ${{ matrix.os }}
@@ -70,9 +56,6 @@ jobs:
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-22.04
             cross: true
-          - target: x86_64-unknown-linux-musl
-            os: ubuntu-22.04
-            cross: true
           - target: x86_64-apple-darwin
             os: macos-13
             cross: false
@@ -82,20 +65,18 @@ jobs:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             cross: false
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-
       - name: Install cross
         if: matrix.cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
-
+        run: |
+          # Install cross using a pinned version to avoid compatibility issues
+          cargo install cross@0.2.5
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -107,7 +88,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.target }}-
             ${{ runner.os }}-cargo-
-
       - name: Build binary
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
@@ -116,18 +96,18 @@ jobs:
             cargo build --release --target ${{ matrix.target }} --bin snob --no-default-features
           fi
         shell: bash
-
       - name: Strip binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          if [ "${{ matrix.target }}" = "x86_64-unknown-linux-musl" ]; then
-            # musl strip might not be available, skip for musl builds
-            echo "Skipping strip for musl target"
+          if [ "${{ matrix.cross }}" = "true" ]; then
+            # For cross-compiled binaries, skip stripping to avoid format mismatch
+            echo "Skipping strip for cross-compiled target ${{ matrix.target }}"
           else
+            # Native builds - safe to strip
             strip target/${{ matrix.target }}/release/snob
+            echo "Stripped binary for target ${{ matrix.target }}"
           fi
         shell: bash
-
       - name: Prepare binary
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
@@ -136,7 +116,6 @@ jobs:
             cp target/${{ matrix.target }}/release/snob snob-${{ matrix.target }}
           fi
         shell: bash
-
       - name: Generate checksum
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
@@ -145,7 +124,6 @@ jobs:
             sha256sum snob-${{ matrix.target }} > snob-${{ matrix.target }}.sha256
           fi
         shell: bash
-
       - name: Test binary
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
@@ -154,7 +132,6 @@ jobs:
             ./snob-${{ matrix.target }} --version
           fi
         shell: bash
-
       - name: Upload binary
         uses: actions/upload-release-asset@v1
         env:
@@ -164,7 +141,6 @@ jobs:
           asset_path: ./snob-${{ matrix.target }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
           asset_name: snob-${{ matrix.target }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
           asset_content_type: application/octet-stream
-
       - name: Upload checksum
         uses: actions/upload-release-asset@v1
         env:
@@ -174,7 +150,6 @@ jobs:
           asset_path: ./snob-${{ matrix.target }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}.sha256
           asset_name: snob-${{ matrix.target }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}.sha256
           asset_content_type: text/plain
-
   generate-install-script:
     needs: [create-release, build]
     runs-on: ubuntu-latest
@@ -184,10 +159,9 @@ jobs:
           echo "# SHA256 Checksums for Snob CLI v${{ needs.create-release.outputs.version }}" > checksums.txt
           echo "# Verify with: sha256sum -c checksums.txt" >> checksums.txt
           echo "" >> checksums.txt
-          
+
           # This is a placeholder - in a real implementation, you'd download and combine all the individual checksums
           echo "# Download individual .sha256 files from the release assets for verification" >> checksums.txt
-
       - name: Upload combined checksums
         uses: actions/upload-release-asset@v1
         env:
@@ -197,3 +171,4 @@ jobs:
           asset_path: ./checksums.txt
           asset_name: checksums.txt
           asset_content_type: text/plain
+
