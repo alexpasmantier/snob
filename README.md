@@ -3,6 +3,7 @@
 
 _Only run tests that matter, saving time and resources._
 
+![Static Badge](https://img.shields.io/badge/alpha-cyan?label=state)
 [![Rust](https://img.shields.io/badge/rust-1.88+-green.svg)](https://www.rust-lang.org)
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
