@@ -80,32 +80,53 @@ fi
 
 # Installation options
 echo ""
-echo "Choose installation method:"
-echo "1) Binary CLI (recommended - faster and more flexible)"
-echo "2) Pytest plugin (for pytest-integrated workflows)"
-echo "3) Build from source (for contributors/advanced users)"
-echo ""
 
-while true; do
-    read -p "Enter choice (1, 2, or 3): " choice
-    case $choice in
-        1)
-            INSTALL_METHOD="binary"
-            break
-            ;;
-        2)
-            INSTALL_METHOD="plugin"
-            break
-            ;;
-        3)
-            INSTALL_METHOD="source"
-            break
-            ;;
-        *)
-            echo "Please enter 1, 2, or 3"
-            ;;
-    esac
-done
+# Check if stdin is available for interactive input
+if [ -t 0 ]; then
+    # Interactive mode - stdin is a terminal
+    echo "Choose installation method:"
+    echo "1) Binary CLI (recommended - faster and more flexible)"
+    echo "2) Pytest plugin (for pytest-integrated workflows) (alpha)"
+    echo "3) Build from source (for contributors/advanced users)"
+    echo ""
+
+    while true; do
+        read -p "Enter choice (1, 2, or 3): " choice
+        case $choice in
+            1)
+                INSTALL_METHOD="binary"
+                break
+                ;;
+            2)
+                INSTALL_METHOD="plugin"
+                break
+                ;;
+            3)
+                INSTALL_METHOD="source"
+                break
+                ;;
+            *)
+                echo "Please enter 1, 2, or 3"
+                ;;
+        esac
+    done
+else
+    # Non-interactive mode (piped from curl) - use default
+    echo "Non-interactive installation detected (piped from curl)."
+    echo "Using recommended method: Binary CLI installation"
+    echo ""
+    echo "Available methods:"
+    echo "1) Binary CLI (recommended - faster and more flexible) ← SELECTED"
+    echo "2) Pytest plugin (for pytest-integrated workflows)"
+    echo "3) Build from source (for contributors/advanced users)"
+    echo ""
+    echo "To choose a different method, download and run the script manually:"
+    echo "  curl -sSL https://raw.githubusercontent.com/alexpasmantier/snob/main/install.sh -o install.sh"
+    echo "  chmod +x install.sh"
+    echo "  ./install.sh"
+    echo ""
+    INSTALL_METHOD="binary"
+fi
 
 if [ "$INSTALL_METHOD" = "binary" ]; then
     # Install prebuilt binary
@@ -186,14 +207,13 @@ if [ "$INSTALL_METHOD" = "binary" ]; then
     echo -e "${GREEN}🎉 Installation complete!${NC}"
     echo ""
     echo "Quick start:"
-    echo "  snob src/file.py                       # List affected tests"
-    echo "  pytest \$(snob src/file.py)             # Run affected tests"
-    echo "  snob --commit-range HEAD~1..HEAD       # Test recent changes"
+    echo "  snob src/changed_file.py                # List affected test files"
+    echo "  pytest \$(snob src/changed_file.py)     # Run affected tests"
     echo ""
     echo "Next steps:"
     echo "- Add $INSTALL_DIR to your PATH if not already done"
     echo "- Create snob.toml for configuration"
-    echo "- Check out examples: https://github.com/alexpasmantier/snob/blob/main/docs/EXAMPLES.md"
+    echo "- Check out examples: https://github.com/alexpasmantier/snob/blob/main/docs/EXAMPLES.md (upcoming)"
 
 elif [ "$INSTALL_METHOD" = "plugin" ]; then
     # Install pytest plugin
@@ -224,9 +244,9 @@ elif [ "$INSTALL_METHOD" = "plugin" ]; then
     echo "  pytest --commit-range main..HEAD      # Test since main branch"
     echo ""
     echo "Next steps:"
-    echo "- Read the Quick Start guide: https://github.com/your-org/snob/blob/main/docs/QUICKSTART.md"
-    echo "- Create snob.toml for configuration"
-    echo "- Check out examples: https://github.com/your-org/snob/blob/main/docs/EXAMPLES.md"
+    echo "- Read the Quick Start guide: https://github.com/alexpasmantier/snob?tab=readme-ov-file#-quick-start"
+    echo "- Create snob.toml for project configuration"
+    echo "- Check out examples: https://github.com/your-org/snob/blob/main/docs/EXAMPLES.md (upcoming)"
 
 fi
 
@@ -286,8 +306,8 @@ if [ "$INSTALL_METHOD" = "source" ]; then
     echo -e "${GREEN}🎉 Installation complete!${NC}"
     echo ""
     echo "Quick start:"
-    echo "  snob src/file.py                       # List affected tests"
-    echo "  pytest \$(snob src/file.py)             # Run affected tests"
+    echo "  snob src/changed_file.py                # List affected test files"
+    echo "  pytest \$(snob src/changed_file.py)     # Run affected tests"
     echo ""
     echo "Development commands:"
     echo "  cargo test                             # Run tests"
@@ -296,15 +316,14 @@ if [ "$INSTALL_METHOD" = "source" ]; then
     echo ""
     echo "Next steps:"
     echo "- Read the Contributing guide: https://github.com/your-org/snob/blob/main/CONTRIBUTING.md"
-    echo "- Run 'cargo test' to verify everything works"
-    echo "- Check out the architecture docs"
+    echo "- Run 'cargo test -- --test-threads=1' to verify everything works"
 fi
 
 # Final setup suggestions
 echo ""
-echo -e "${BLUE}💡 Pro Tips:${NC}"
+echo -e "${BLUE}💡 Tips:${NC}"
 echo "- Create a snob.toml file to configure for your project"
 echo "- Add Snob to your CI/CD pipeline for faster builds"
-echo "- Use 'snob --dot-graph deps.dot' to visualize dependencies"
+echo "- Use 'snob --dot-graph deps.dot' to visualize snob's dependency graph"
 echo ""
 echo -e "${GREEN}Happy testing! 🧪${NC}"
