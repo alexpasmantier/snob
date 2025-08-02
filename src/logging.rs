@@ -22,13 +22,11 @@ impl LoggingConfiguration {
 }
 
 pub fn init_logging(configuration: &LoggingConfiguration) {
-    if configuration.quiet {
-        stderrlog::new()
-            .verbosity(configuration.verbosity_level)
-            .quiet(configuration.quiet)
-            .init()
-            .unwrap();
-    }
+    stderrlog::new()
+        .verbosity(configuration.verbosity_level)
+        .quiet(configuration.quiet)
+        .init()
+        .unwrap();
 }
 
 #[macro_export]

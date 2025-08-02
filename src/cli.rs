@@ -3,14 +3,23 @@ use std::path::PathBuf;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about=None)]
+#[command(
+    version,
+    about = "Find tests impacted by code changes",
+    long_about = "Snob analyzes your Python code changes and identifies which tests need to run.\n\nUsage examples:\n  git diff --name-only | snob | xargs pytest\n  snob src/auth.py src/utils.py\n  git diff --name-only HEAD~1..HEAD | snob | xargs pytest"
+)]
 pub struct Cli {
-    /// The target directory to analyze
-    #[arg(short, long, value_name = "FILE", default_value = ".")]
+    /// The target directory to analyze for dependencies
+    #[arg(short, long, value_name = "DIR", default_value = ".")]
     pub target_directory: PathBuf,
 
-    /// Files that were modified by the patch
-    #[arg(value_name = "FILE")]
+    /// Python files that have been changed/modified (e.g., from git diff, your editor, etc.)
+    /// These are the files you want to find tests for
+    #[arg(
+        value_name = "CHANGED_FILES",
+        help = "Python files that were modified and need testing.
+These can easily be obtained using your version control system (e.g., `git diff --name-only`)"
+    )]
     pub updated_files: Vec<String>,
 
     /// Verbosity level (0-4+)

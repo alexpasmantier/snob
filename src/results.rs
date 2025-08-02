@@ -4,6 +4,7 @@ use rustc_hash::FxHashSet;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
+#[derive(Debug, PartialEq)]
 pub struct SnobResult {
     pub impacted: HashSet<String>,
     pub always_run: HashSet<String>,

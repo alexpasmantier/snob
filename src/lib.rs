@@ -60,6 +60,7 @@ pub fn snob_lib(m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
+#[derive(Debug, PartialEq)]
 pub enum SnobOutput {
     All,
     Partial(results::SnobResult),

@@ -7,8 +7,9 @@ use crate::snob_debug;
 
 #[derive(Debug, Default, Deserialize)]
 pub struct Config {
-    /// general configuration
+    /// general configuration (used by Python interface)
     #[serde(default)]
+    #[allow(dead_code)] // Used by PyO3 interface in lib.rs
     pub general: GeneralConfig,
     /// files-related configuration
     #[serde(default)]
@@ -18,12 +19,14 @@ pub struct Config {
     pub tests: TestsConfig,
 }
 
-// FIXME: not sure we're actually using this
+// Used by Python interface in lib.rs for logging configuration
 #[derive(Debug, Default, Deserialize)]
 pub struct GeneralConfig {
     #[serde(default = "default_verbosity_level")]
+    #[allow(dead_code)] // Used by PyO3 interface in lib.rs
     pub verbosity_level: usize,
     #[serde(default = "default_quiet")]
+    #[allow(dead_code)] // Used by PyO3 interface in lib.rs
     pub quiet: bool,
 }
 

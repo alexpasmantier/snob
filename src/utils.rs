@@ -40,9 +40,8 @@ where
 {
     let file = file.as_ref();
     file.file_name()
-        .unwrap()
-        .to_string_lossy()
-        .starts_with("test_")
+        .map(|name| name.to_string_lossy().starts_with("test_"))
+        .unwrap_or(false)
         || file.to_string_lossy().ends_with("_test.py")
 }
 
@@ -167,23 +166,46 @@ mod tests {
 
     #[test]
     fn test_get_pythonpath_empty() {
+        // Save the original value to restore later
+        let original = std::env::var(PYTHONPATH_ENV).ok();
+
         std::env::remove_var(PYTHONPATH_ENV);
         let pythonpath = get_pythonpath();
         assert!(pythonpath.is_empty());
+
+        // Restore original value
+        match original {
+            Some(val) => std::env::set_var(PYTHONPATH_ENV, val),
+            None => {} // Already removed
+        }
     }
 
     #[test]
     fn test_get_pythonpath() {
-        std::env::set_var(PYTHONPATH_ENV, "/some/path:/another/path");
+        // Save the original value to restore later
+        let original = std::env::var(PYTHONPATH_ENV).ok();
+
+        // Use the platform-specific separator
+        let test_path = format!("/some/path{}/another/path", PYTHONPATH_SEPARATOR);
+        std::env::set_var(PYTHONPATH_ENV, &test_path);
         let pythonpath = get_pythonpath();
         assert_eq!(
             pythonpath,
             vec![PathBuf::from("/some/path"), PathBuf::from("/another/path")]
         );
+
+        // Restore original value
+        match original {
+            Some(val) => std::env::set_var(PYTHONPATH_ENV, val),
+            None => std::env::remove_var(PYTHONPATH_ENV),
+        }
     }
 
     #[test]
     fn test_get_python_local_lookup_paths() {
+        // Save the original value to restore later
+        let original = std::env::var(PYTHONPATH_ENV).ok();
+
         let current_dir = PathBuf::from("/home/user/project/src");
         let git_root = PathBuf::from("/home/user/project");
         let pythonpath = vec![
@@ -197,7 +219,7 @@ mod tests {
                 .iter()
                 .map(|p| p.to_str().unwrap())
                 .collect::<Vec<_>>()
-                .join(":"),
+                .join(PYTHONPATH_SEPARATOR),
         );
         let local_paths = get_python_local_lookup_paths(&current_dir, &git_root);
         assert_eq!(
@@ -215,6 +237,12 @@ mod tests {
                 .collect()
             }
         );
+
+        // Restore original value
+        match original {
+            Some(val) => std::env::set_var(PYTHONPATH_ENV, val),
+            None => std::env::remove_var(PYTHONPATH_ENV),
+        }
     }
 }
 

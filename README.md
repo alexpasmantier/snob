@@ -1,99 +1,181 @@
 <div align="center">
 
+<h1>🧐 Snob</h1>
 
-<img src="https://github.com/alexpasmantier/snob/raw/main/assets/snob.png" width="480" alt="snob, the picky test selector for python projects">
+_Only run tests that matter, saving time and resources._
 
-**Picky test selector for python projects**
+[![Rust](https://img.shields.io/badge/rust-1.88+-green.svg)](https://www.rust-lang.org)
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/pytest-snob.svg)](https://pypi.org/project/pytest-snob/)
 
 </div>
 
-## 🖐️ DISCLAIMER
+Snob speeds up your development workflow and reduces CI testing costs dramatically by analyzing your Python project's dependency graph to intelligently select which tests to run based on code changes.
 
-`snob` is still early stage, we'll be adding more polish in the days/weeks to come
+## 🚀 Quick Start
 
-## 🧐 About
+### Installation
 
-For most python projects, running the full test suite for a given PR in a CI is the law of the land.
-Because python is not the fastest language, this can sometimes make for a tedious experience (or a costly one
-if you're willing to shell out for more workers / parallelization).
-
-The whole idea behind `snob` is that one should only care about running _relevant_ tests for a given commit, that is
-tests covering files that are _impacted_ by the changes, either directly or indirectly.
-
-The increase in granularity when selecting the tests allows for faster and less costly CI runs, saving time, money
-and headaches for the whole family.
-
-## ✨ Features
-
-`snob` leverages the rust language to go through your project's dependency graph and determine 
-relations between your modules, packages and test files. Using those relations, it then determines for a given
-git commit (or range of commits) which files are _impacted_ and which _associated test files_ should be run.
-
-## 🖥️ Installation
-
-To make things as easy as possible for developers, `snob`'s goodness is available through the [pytest-snob](https://pypi.org/project/pytest-snob/)
-pytest plugin, which you can directly install using your python packaging tool of choice (likely `uv`, but could be `pip` or `poetry`).
-
-This pytest plugin leverages the [snob-lib](https://pypi.org/project/snob-lib/) built using the [pyo3](https://github.com/PyO3/pyo3) / [maturin](https://github.com/PyO3/maturin) toolchain.
-
-## 💪 Usage
-
-first, install the `pytest-snob` pytest plugin
+**🚀 Quick Install (Recommended)**
 
 ```bash
-# create a ven and source that venv, then
-uv pip install pytest-snob
+curl -sSL https://raw.githubusercontent.com/alexpasmantier/snob/main/install.sh | bash
 ```
-then run pytest on a range of commits (most often, this would be between your branch and `main`/`master`, in your CI)
+
+**Standalone CLI**
 
 ```bash
+cargo install snob
+```
+
+**Pytest Plugin**
+
+```bash
+pip install pytest-snob
+```
+
+### Basic Usage (CLI)
+
+Snob can be used as a standalone CLI tool and works best when paired with a version control system like Git and a Python testing framework (e.g. pytest).
+
+The most common usage is to run Snob with your changed files to get a list of affected tests:
+
+```bash
+snob $(git diff --name-only)  # lists tests affected by your changes
+
+# tests/test_file_1.py
+# tests/test_file_2.py
+# tests/test_file_3.py
+```
+
+And then use those results as input to your test runner:
+
+```bash
+snob $(git diff --name-only) | xargs pytest
+
+# INFO snob: Analyzed 405 files in 8.513462ms
+# INFO snob: Found 27/124 impacted tests
+# ============ test session starts ============
+# ... collected 27 items
+```
+
+**Using Snob with Pytest**
+
+Snob can also be used as a pytest plugin to automatically select tests based on your code changes.
+
+```bash
+# Test changes since a specific commit
 pytest --commit-range d68ae21..af8acc9
+
+# Test changes since main branch
+pytest --commit-range main..HEAD
 ```
 
-that's it 🔥
+## ⚙️ Configuration
 
-## ⚒️ Configuration
+Snob configuration can either be loaded from:
 
-`snob` can be configured through a configuration file called `snob.toml` or through a section of
-your pre-existing project configuration file `pyproject.toml`
+- a `snob.toml` file in your project root
+- a `[tool.snob]` section in your `pyproject.toml`
 
-here's an example what your `$GIT_ROOT/snob.toml` configuration file might look like
+<details>
+<summary>configuration options</summary>
 
 ```toml
 [general]
-# whether you want to get logs from the rust code hacking away behind the scene
+# Logging verbosity (0=error, 1=warn, 2=info, 3=debug, 4=trace)
 verbosity_level = 2
+# Whether to disable all logging output
 quiet = false
 
 [files]
-# the files listed here won't be considered by snob for import statements (glob format)
-# EXAMPLE: suppose you have some configuration files that carry information
-# updated on commit or in the CI but this file has no relation to the rest of your codebase
-ignores = ["files_to_ignore/**/*.py"]
+# The files listed here will be ignored by snob when crawling the workspace.
+# This can be useful for excluding generated files, migrations, or scripts that don't affect the project's dependency graph.
+ignores = [
+    "migrations/**/*.py",
+    "scripts/**/*.py",
+    "**/generated_*.py"
+]
 
-# the files listed here will trigger all tests on change
-# this is for files that are extremely important to you and you want covered
-# always all the time for some reason
-run-all-tests-on-change = []
+# The files listed here will trigger all tests when changed.
+# This is useful for critical files like `conftest.py`, `pytest.ini`, or `requirements.txt` for which you want to
+# rerun the entire test suite.
+run-all-tests-on-change = [
+    "conftest.py",
+    "pytest.ini",
+    "requirements.txt"
+]
 
 [tests]
-# the tests listed here will never run (glob format)
-ignores = ["some_expensive_test_that_runs_elsewhere.py"]
-# the tests listed here will always run (has higher priority than ignores)
-always-run = ["tests/mandatory_tests/**/*.py"]
-````
-## 🤝 Contributions
+# These test files will always be run, regardless of changes.
+# This is useful for health checks, smoke tests, or critical tests that should always run.
+always-run = [
+    "tests/health_check.py",
+    "tests/smoke_test.py"
+]
 
-Contributions and pull requests are welcome.
+# These test files will never be run automatically by snob, but can still be run manually.
+# This can be useful for long-running tests, integration tests, or tests that require special setup which you do not
+# wish to run without deciding to do so explicitly.
+ignores = [
+"tests/slow/**/*.py",
+"tests/integration/external_api_*.py"
+]
+```
 
-So are issues and ideas, but just like when streaming in 8K, mind the bandwidth.
+**Alternative: Use `pyproject.toml`**
 
-## 🙏 Credits
+Same format as above, but placed under the `[tool.snob]` section:
 
-This project was inspired by outrageous recurring Jenkins / CircleCI monthly bills and those 38 minutes test suite runs gnawing at your soul
-one irrelevant flaky test failure at a time.
+```toml
+[tool.snob]
+verbosity_level = 1
 
-Also, we'd like to use the occasion to thank all the dedicated, passionate and hard-working open source maintainers of the excellent [rayon](https://github.com/rayon-rs/rayon), 
-[ruffpython_parser](https://github.com/astral-sh/ruff), [maturin](https://github.com/PyO3/maturin), [pyo3](https://github.com/PyO3/pyo3) projects, among many other ones, for making our lives easier while building `snob`.
+[tool.snob.files]
+ignores = ["migrations/**/*.py"]
 
-Standing on the shoulders of giants, we're deeply grateful to all of you.
+[tool.snob.tests]
+always-run = ["tests/smoke_test.py"]
+```
+
+</details>
+
+## 🧪 Understanding Test Selection
+
+Snob analyzes your codebase to build a dependency graph of files and tests. It uses this graph to determine which tests
+are affected by changes in your code.
+
+This graph can be printed out in a visual format using Graphviz, which can help you understand how your code and tests
+are related.
+
+```bash
+# Generate a dependency graph of your codebase and dump it to `deps.dot`
+snob --dot-graph deps.dot $(git diff --name-only)
+
+# Convert the dot file to a PNG image using Graphviz
+dot -Tpng deps.dot -Ksfdp -o graph.png
+```
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## 📊 Performance
+
+Snob is fast enough to be entirely transparent in your workflow.
+
+On modern hardware, it should be able to handle 1M+ loc codebases in as little as 100ms which is faster than most test
+runners even need to initialize.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+
+**⭐ [Star us on GitHub](https://githugb.com/alexpasmantier/snob) • 🐛 [Report Issues](https://github.com/alexpasmantier/snob/issues) • 🤝 [Contribute](https://github.com/alexpasmantier/snob/CONTRIBUTING.md)**
+
+</div>
