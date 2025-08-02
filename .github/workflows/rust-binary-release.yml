@@ -111,9 +111,9 @@ jobs:
       - name: Build binary
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
-            cross build --release --target ${{ matrix.target }} --bin snob
+            cross build --release --target ${{ matrix.target }} --bin snob --no-default-features
           else
-            cargo build --release --target ${{ matrix.target }} --bin snob
+            cargo build --release --target ${{ matrix.target }} --bin snob --no-default-features
           fi
         shell: bash
 

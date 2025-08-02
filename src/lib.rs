@@ -1,13 +1,19 @@
+#[cfg(feature = "python")]
 use anyhow::Result;
+#[cfg(feature = "python")]
 use config::Config;
+#[cfg(feature = "python")]
 use fs::crawl_workspace;
+#[cfg(feature = "python")]
 use graph::discover_impacted_nodes;
+#[cfg(feature = "python")]
 use logging::{init_logging, LoggingConfiguration};
+#[cfg(feature = "python")]
 use rustc_hash::{FxHashMap, FxHashSet};
+#[cfg(feature = "python")]
 use std::path::PathBuf;
+#[cfg(feature = "python")]
 use utils::{get_python_local_lookup_paths, get_repo_root, merge_hashmaps};
-
-use pyo3::prelude::*;
 
 pub mod ast;
 pub mod config;
@@ -18,6 +24,10 @@ pub mod results;
 pub mod stdin;
 pub mod utils;
 
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
+#[cfg(feature = "python")]
 #[pyfunction]
 pub fn get_tests(changed_files: Vec<String>) -> PyResult<Vec<String>> {
     let current_dir = std::env::current_dir()?;
@@ -54,18 +64,21 @@ pub fn get_tests(changed_files: Vec<String>) -> PyResult<Vec<String>> {
 }
 
 /// A Python module implemented in Rust.
+#[cfg(feature = "python")]
 #[pymodule]
 pub fn snob_lib(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(get_tests, m)?)?;
     Ok(())
 }
 
+#[cfg(feature = "python")]
 #[derive(Debug, PartialEq)]
 pub enum SnobOutput {
     All,
     Partial(results::SnobResult),
 }
 
+#[cfg(feature = "python")]
 pub fn get_impacted_tests_from_changed_files(
     config: &Config,
     current_dir: &PathBuf,

@@ -31,7 +31,7 @@ path = "src/main.rs"
 
 
 [dependencies]
-pyo3 = "0.23"
+pyo3 = { version = "0.25", optional = true }
 ruff_python_ast = { git = "https://github.com/astral-sh/ruff.git", tag = "v0.4.9" }
 ruff_python_parser = { git = "https://github.com/astral-sh/ruff.git", tag = "v0.4.9" }
 ignore = "0.4"
@@ -52,6 +52,10 @@ winapi-util = "0.1"
 [dev-dependencies]
 tempfile = "3.14"
 
+
+[features]
+default = []
+python = ["pyo3"]
 
 [profile.release]
 lto = "fat"

@@ -1,4 +1,5 @@
 use globset::GlobSet;
+#[cfg(feature = "python")]
 use pyo3::{exceptions::PyFileNotFoundError, PyErr};
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::{
@@ -114,6 +115,7 @@ impl Display for GitRootError {
 
 impl std::error::Error for GitRootError {}
 
+#[cfg(feature = "python")]
 impl std::convert::From<GitRootError> for PyErr {
     fn from(err: GitRootError) -> PyErr {
         PyFileNotFoundError::new_err(err.to_string())
