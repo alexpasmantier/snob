@@ -119,16 +119,29 @@ jobs:
       - name: Generate checksum
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            # Windows (using Git Bash which has sha256sum)
             sha256sum snob-${{ matrix.target }}.exe > snob-${{ matrix.target }}.exe.sha256
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            # macOS uses shasum instead of sha256sum
+            if [ -f snob-${{ matrix.target }} ]; then
+              shasum -a 256 snob-${{ matrix.target }} > snob-${{ matrix.target }}.sha256
+            fi
           else
+            # Linux
             sha256sum snob-${{ matrix.target }} > snob-${{ matrix.target }}.sha256
           fi
         shell: bash
       - name: Test binary
         run: |
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          if [ "${{ matrix.cross }}" = "true" ]; then
+            # Skip testing cross-compiled binaries (can't run on host architecture)
+            echo "Skipping test for cross-compiled target ${{ matrix.target }}"
+            echo "Binary exists: $(ls -la snob-${{ matrix.target }} 2>/dev/null || echo 'not found')"
+          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+            echo "Testing Windows binary..."
             ./snob-${{ matrix.target }}.exe --version
           else
+            echo "Testing native binary..."
             ./snob-${{ matrix.target }} --version
           fi
         shell: bash
