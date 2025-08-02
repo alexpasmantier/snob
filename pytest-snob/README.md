@@ -5,8 +5,7 @@ tests to execute in a given application based on the contents of a range of comm
 
 ## Rationale
 
-Most of the time, running your full test suite is a waste of time and resources, since only a portion of the files has changed
-since your last CI run / deploy.
+Most of the time, running your full test suite is a waste of time and resources, since only a portion of the files has changed since your last CI run / deploy.
 
 By leveraging `snob`, this pytest plugin will accurately determine which tests are relevant for a given changeset and only run those.
 
