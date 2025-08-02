@@ -11,6 +11,10 @@ _Only run tests that matter, saving time and resources._
 
 </div>
 
+## 📖 Rationale
+
+Most of the time, running your full test suite is a waste of time and resources, since only a portion of the files has changed since your last CI run / deploy.
+
 Snob speeds up your development workflow and reduces CI testing costs dramatically by analyzing your Python project's dependency graph to intelligently select which tests to run based on code changes.
 
 ## 🚀 Quick Start
@@ -154,8 +158,14 @@ are related.
 snob --dot-graph deps.dot $(git diff --name-only)
 
 # Convert the dot file to a PNG image using Graphviz
-dot -Tpng deps.dot -Ksfdp -o graph.png
+dot -Tsvg deps.dot -Ksfdp -o graph.svg
 ```
+
+_`graph.png`_
+
+<div align="left">
+    <img width="600" alt="Screenshot From 2025-08-03 00-01-58" src="https://github.com/user-attachments/assets/35e6c73f-1968-4170-b736-7a7c979b443d" />
+</div>
 
 ## 🤝 Contributing
 
@@ -163,10 +173,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## 📊 Performance
 
-Snob is fast enough to be entirely transparent in your workflow.
-
-On modern hardware, it should be able to handle 1M+ loc codebases in as little as 100ms which is faster than most test
-runners even need to initialize.
+Snob is fast. On modern hardware, it should handle million line Python codebases with thousands of tests in a matter of milliseconds, making it disappear into the background of your development workflow.
 
 ## 📄 License
 
@@ -176,6 +183,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-**⭐ [Star us on GitHub](https://githugb.com/alexpasmantier/snob) • 🐛 [Report Issues](https://github.com/alexpasmantier/snob/issues) • 🤝 [Contribute](https://github.com/alexpasmantier/snob/CONTRIBUTING.md)**
+**⭐ [Star us on GitHub](https://githugb.com/alexpasmantier/snob) • 🐛 [Report Issues](https://github.com/alexpasmantier/snob/issues) • 🤝 [Contribute](CONTRIBUTING.md)**
 
 </div>
