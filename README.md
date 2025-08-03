@@ -13,9 +13,18 @@ _Only run tests that matter, saving time and resources._
 
 ## 📖 Rationale
 
-Most of the time, running your full test suite is a waste of time and resources, since only a portion of the files has changed since your last CI run / deploy.
+Most of the time, running your full test suite is a waste of time and resources, since only a portion of the files has changed since your last commit / CI run / deploy.
 
-Snob speeds up your development workflow and reduces CI testing costs dramatically by analyzing your Python project's dependency graph to intelligently select which tests to run based on code changes.
+Snob speeds up your development workflow dramatically by analyzing your Python project's dependency graph to intelligently select which tests to run based on code changes.
+
+## What Snob isn't
+Snob doesn’t predict failures—it selects tests based on static import dependencies.
+
+It’s aimed at reducing locally run test suite size dramatically (often skipping 99% of irrelevant tests).
+
+It’s not intended to replace CI or full regression testing, but to speed up feature development cycles in large codebases.
+
+Limitations include missing dynamic imports, runtime side-effects, or implicit import behavior.
 
 ## 🚀 Quick Start
 
