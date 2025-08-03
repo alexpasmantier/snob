@@ -21,22 +21,8 @@ Snob speeds up your development workflow and reduces CI testing costs dramatical
 
 ### Installation
 
-**🚀 Quick Install (Recommended)**
-
 ```bash
 curl -sSL https://raw.githubusercontent.com/alexpasmantier/snob/main/install.sh | bash
-```
-
-**Standalone CLI**
-
-```bash
-cargo install snob
-```
-
-**Pytest Plugin**
-
-```bash
-pip install pytest-snob
 ```
 
 ### Basic Usage (CLI)
@@ -161,7 +147,7 @@ snob --dot-graph deps.dot $(git diff --name-only)
 dot -Tsvg deps.dot -Ksfdp -o graph.svg
 ```
 
-_`graph.png`_
+_`graph.svg`_
 
 <div align="left">
     <img width="600" alt="Screenshot From 2025-08-03 00-01-58" src="https://github.com/user-attachments/assets/35e6c73f-1968-4170-b736-7a7c979b443d" />

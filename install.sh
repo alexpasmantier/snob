@@ -246,7 +246,7 @@ elif [ "$INSTALL_METHOD" = "plugin" ]; then
     echo "Next steps:"
     echo "- Read the Quick Start guide: https://github.com/alexpasmantier/snob?tab=readme-ov-file#-quick-start"
     echo "- Create snob.toml for project configuration"
-    echo "- Check out examples: https://github.com/your-org/snob/blob/main/docs/EXAMPLES.md (upcoming)"
+    echo "- Check out examples: https://github.com/alexpasmantier/snob/blob/main/docs/EXAMPLES.md (upcoming)"
 
 fi
 
@@ -268,7 +268,7 @@ if [ "$INSTALL_METHOD" = "source" ]; then
     # Clone repository if not already present
     if [ ! -f "Cargo.toml" ]; then
         print_step "Cloning Snob repository..."
-        git clone https://github.com/your-org/snob.git
+        git clone https://github.com/alexpasmantier/snob.git
         cd snob
         print_success "Repository cloned"
     fi
@@ -315,7 +315,7 @@ if [ "$INSTALL_METHOD" = "source" ]; then
     echo "  cargo fmt                             # Format code"
     echo ""
     echo "Next steps:"
-    echo "- Read the Contributing guide: https://github.com/your-org/snob/blob/main/CONTRIBUTING.md"
+    echo "- Read the Contributing guide: https://github.com/alexpasmantier/snob/blob/main/CONTRIBUTING.md"
     echo "- Run 'cargo test -- --test-threads=1' to verify everything works"
 fi
 
