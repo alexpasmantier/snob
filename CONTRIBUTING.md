@@ -9,7 +9,7 @@ Start here:
 1. **Fork** the repository on GitHub
 2. **Clone** your fork: `git clone https://github.com/yourusername/snob`
 3. **Set up** development environment (see below)
-4. **Pick an issue** from our [good first issue](https://github.com/your-org/snob/labels/good%20first%20issue) list
+4. **Pick an issue** or create a new one explaining your idea/improvement/fix
 5. **Make changes** and add tests
 6. **Submit** a pull request
 
@@ -112,4 +112,3 @@ python -c "import snob_lib; print('Works!')"
 # Build for distribution
 maturin build --release
 ```
-
